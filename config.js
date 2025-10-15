@@ -5,6 +5,8 @@ dotenv.config();
 export const port = process.env.PORT || 3000;
 export const secretKey = process.env.SECRET_KEY;
 
+console.log("SECRET_KEY: ", process.env.SECRET_KEY)
+
 if (!secretKey) {
     throw new Error ("SECRET_KEY environment variable is not set.")
 }
