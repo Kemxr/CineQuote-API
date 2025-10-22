@@ -1,0 +1,30 @@
+GET http://localhost:3000/users
+
+###
+
+GET http://localhost:3000/users/68f8cd6efdc1e9b889cd1cf1
+
+###
+
+POST http://localhost:3000/users
+Content-Type: application/json
+
+{
+    "name": "Marc",
+    "email": "marc@email.com",
+    "password": "password-1"
+}
+
+###
+
+DELETE http://localhost:3000/users/68f768f96d7114d31368aa16
+
+###
+
+PATCH http://localhost:3000/users/68f7697699962d9c22646ecd
+Content-Type: application/json
+
+{
+"name": "New name",
+"email": "New email"
+}
