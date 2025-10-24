@@ -16,9 +16,6 @@ router.get("/", getAllUsers);
 // Récupérer un utilisateur par ID
 router.get("/:id", getUser, getUserById);
 
-// Créer un utilisateur
-router.post("/", createUser);
-
 // Mettre à jour un utilisateur
 router.patch("/:id", getUser, updateUser);
 
