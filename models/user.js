@@ -24,9 +24,15 @@ const userSchema = new mongoose.Schema({
         enum: ["user", "admin"],
         default: "user",
     },
+    favorites: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Quote"
+    }],
 }, { timestamps: true });
 
-//ajouter propriétés (favorite, etc...)
+
+//Format du code bien, enlever le try catch nul et faire dans app.js
+//Pour le embeded ou classique Postgre, regarde ce qui va le mieux mais si embeded => pas besoin de model vu que déclarer dans users
 
 //hash du mdp
 userSchema.pre("save", async function (next) {

@@ -9,8 +9,6 @@ const generateToken = (id, role) => {
 // Inscription
 export const registerUser = async (req, res) => {
   const { name, email, password } = req.body;
-
-  try {
     const userExists = await User.findOne({ email });
     if (userExists) return res.status(400).json({ message: "Email déjà utilisé" });
 
@@ -25,16 +23,11 @@ export const registerUser = async (req, res) => {
       role: user.role,
       token,
     });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
 };
 
 // Connexion
 export const loginUser = async (req, res) => {
   const { email, password } = req.body;
-
-  try {
     const user = await User.findOne({ email });
     if (!user) return res.status(400).json({ message: "Email ou mot de passe incorrect" });
 
@@ -50,7 +43,4 @@ export const loginUser = async (req, res) => {
       role: user.role,
       token,
     });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
 };
