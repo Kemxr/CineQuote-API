@@ -1,6 +1,7 @@
 import jwt from "jsonwebtoken";
 import User from "../models/user.js";
 
+//Pour que seulement ceux qui sont authentifié puisse appeler les routes
 export const protect = async (req, res, next) => {
   let token;
 
@@ -18,7 +19,11 @@ export const protect = async (req, res, next) => {
   if (!token) return res.status(401).json({ message: "Non autorisé, pas de token" });
 };
 
+//Pour protéger les routes
 export const adminOnly = (req, res, next) => {
-  if (req.user && req.user.role === "admin") next();
-  else res.status(403).json({ message: "Accès réservé à l’administrateur" });
+  if (req.user && req.user.role === "admin") {
+    next();
+  } else {
+    res.status(403).json({ message: "Accès réservé à l’administrateur" });
+  }
 };

@@ -8,6 +8,8 @@ import indexRouter from "./routes/index.js";
 import usersRouter from "./routes/users.js";
 import authRouter from "./routes/auth.js";
 import favoritesRouter from "./routes/favorites.js";
+import filmsRouter from "./routes/films.js"
+import quotesRouter from "./routes/quotes.js"
 
 dotenv.config();
 
@@ -23,6 +25,8 @@ app.use("/", indexRouter);
 app.use("/users", usersRouter);
 app.use("/auth", authRouter);
 app.use("/favorites", favoritesRouter);
+app.use("/films", filmsRouter);
+app.use("/quotes", quotesRouter);
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
