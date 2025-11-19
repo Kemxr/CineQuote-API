@@ -4,7 +4,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "nodemon --env-file=.env",
+    "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
+    "dev:server": "nodemon --env-file=.env",
+    "dev:client": "cd ./frontend/cine-quote-frontend && npm run dev",
     "start": "node ./bin/start",
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
     "seed": "node ./seed.js",
@@ -21,6 +23,7 @@
     "morgan": "^1.10.1"
   },
   "devDependencies": {
+    "concurrently": "^9.2.1",
     "dotenv": "^17.2.3",
     "jest": "^30.2.0",
     "nodemon": "^3.1.10"
