@@ -3,6 +3,7 @@ import createError from "http-errors";
 import logger from "morgan";
 import mongoose from "mongoose";
 import * as dotenv from "dotenv";
+import cookieParser from "cookie-parser"
 
 import indexRouter from "./routes/index.js";
 import usersRouter from "./routes/users.js";
@@ -21,12 +22,13 @@ app.use(logger("dev"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
+app.use(cookieParser());
 app.use("/", indexRouter);
-app.use("/users", usersRouter);
-app.use("/auth", authRouter);
-app.use("/favorites", favoritesRouter);
-app.use("/films", filmsRouter);
-app.use("/quotes", quotesRouter);
+app.use("/api/users", usersRouter);
+app.use("/api/auth", authRouter);
+app.use("/api/favorites", favoritesRouter);
+app.use("/api/films", filmsRouter);
+app.use("/api/quotes", quotesRouter);
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {

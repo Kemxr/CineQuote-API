@@ -2,13 +2,23 @@ import User from "../models/user.js";
 
 // Récupérer tous les utilisateurs
 export const getAllUsers = async (req, res) => {
-    const users = await User.find();
+    const users = await User.find()
+    .populate({
+      path: "favorites",
+      populate: { path: "film"}
+    })
     res.json(users);
 };
 
 // Récupérer un utilisateur
-export const getUserById = (req, res) => {
-  res.json(res.user);
+export const getUserById = async (req, res) => {
+  const user = await User.findById(req.params.id)
+    .populate({
+      path: "favorites",
+      populate: { path: "film" }
+    });
+  if (!user) return res.status(404).json({ message: "Utilisateur non trouvé" });
+  res.json(user);
 };
 
 // Créer un utilisateur
