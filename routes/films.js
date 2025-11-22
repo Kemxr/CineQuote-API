@@ -1,17 +1,17 @@
 import express from "express";
-import { getFilms, getFilmById} from "../controllers/filmController.js"
+import { getFilms, getFilmById, getQuoteCount, getTopFilms} from "../controllers/filmController.js"
 
 const router = express.Router();
 
 router.get("/", getFilms);
+router.get("/top", getTopFilms);
 router.get("/:id", getFilmById);
+router.get("/:id/quoteCount", getQuoteCount);
 
-//La base est faite je pense, vérifier que le bail de favoris fonctionne bien
-//Ce qu'il reste à faire => paginated list, (agregation ?), geolocalisation + image téléphone
-//Pour le agregated p-e faire le nombre de favoris d'un user
 
-//JWT
-//Soit rester avec headers et créer le cookie en front
-//Soit créer le cookie en back avec req.headers.cookie et parseCookie puis envoyer le token au front
+//Ce qu'il reste à faire => paginated list, geolocalisation + image téléphone
+
+
+//Ajouter des validations basique sur les user input
 
 export default router;
