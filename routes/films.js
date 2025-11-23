@@ -9,9 +9,7 @@ router.get("/:id", getFilmById);
 router.get("/:id/quoteCount", getQuoteCount);
 
 
-//Ce qu'il reste à faire => paginated list, geolocalisation + image téléphone
+//Ce qu'il reste à faire => paginated list, filtres, trucs du téléphone
 
-
-//Ajouter des validations basique sur les user input
 
 export default router;

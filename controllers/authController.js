@@ -1,9 +1,6 @@
 import jwt from "jsonwebtoken";
 import User from "../models/user.js";
 
-// const JWT_SECRET = process.env.JWT_SECRET;
-// const JWT_SECRET = "salut";
-
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || "7d";
 
 // Génère le JWT
@@ -17,6 +14,18 @@ const generateToken = (id, role) => {
 // Inscription
 export const registerUser = async (req, res) => {
   const { name, email, password } = req.body;
+
+  // Vérifications basiques
+  if (!name || typeof name !== "string" || name.trim().length < 2) {
+    return res.status(400).json({ message: "Nom requis (min 2 caractères)" });
+  }
+  if (!email || typeof email !== "string" || !/^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/.test(email)) {
+    return res.status(400).json({ message: "Email invalide" });
+  }
+  if (!password || typeof password !== "string" || password.length < 6) {
+    return res.status(400).json({ message: "Mot de passe requis (min 6 caractères)" });
+  }
+
   const userExists = await User.findOne({ email });
   if (userExists) return res.status(400).json({ message: "Email déjà utilisé" });
 
@@ -69,12 +78,9 @@ export const logoutUser = async (req, res) => {
   res.json({ message: "Déconnecté" });
 };
 
-/**
- * Convertit la durée JWT en ms (ex: '15m', '1h', '7d')
- */
 function parseExpirationTime(expiresIn) {
   const match = expiresIn.match(/^(\d+)([smhd])$/);
-  if (!match) return 7 * 24 * 60 * 60 * 1000; // 7 jours par défaut
+  if (!match) return 7 * 24 * 60 * 60 * 1000;
 
   const [, value, unit] = match;
   const num = parseInt(value);

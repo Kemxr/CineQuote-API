@@ -1,7 +1,5 @@
 import Quote from "../models/quote.js"
 
-//Si je veux modifier / ajouter plus de truc dans quote le faire dans le model et
-//ensuite modifier ici
 
 export const addQuote = async (req, res) => {
     const quote = new Quote({
