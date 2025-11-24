@@ -33,7 +33,7 @@
       <p v-if="error" class="error-message">{{ error }}</p>
 
       <div class="login-footer">
-        <p>Pas encore de compte? <a href="#signup">S'inscrire</a></p>
+        <p>Pas encore de compte? <router-link to="/register">S'inscrire</router-link></p>
       </div>
     </div>
   </div>
@@ -193,14 +193,17 @@ input:focus {
   font-size: 14px;
 }
 
-.login-footer a {
+.login-footer a,
+.login-footer router-link {
   color: #667eea;
   text-decoration: none;
   font-weight: 600;
   transition: color 0.3s;
+  cursor: pointer;
 }
 
-.login-footer a:hover {
+.login-footer a:hover,
+.login-footer router-link:hover {
   color: #764ba2;
 }
 
