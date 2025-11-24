@@ -6,12 +6,12 @@
       
       <form @submit.prevent="handleLogin">
         <div class="form-group">
-          <label for="username">Pseudo</label>
+          <label for="email">Email</label>
           <input
-            id="username"
-            v-model="username"
-            type="text"
-            placeholder="Entrez votre pseudo"
+            id="email"
+            v-model="email"
+            type="email"
+            placeholder="Entrez votre email"
             required
           />
         </div>
