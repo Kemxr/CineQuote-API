@@ -1,64 +1,39 @@
 <template>
   <div class="login-container">
-    <div class="login-wrapper">
-      <div class="login-left">
-        <div class="branding">
-          <h1 class="app-title">CineQuote</h1>
-          <p class="app-subtitle">Découvrez les meilleures citations du cinéma</p>
+    <div class="login-card">
+      <h2>Connexion</h2>
+      <p class="login-subtitle">Bienvenue sur CineQuote</p>
+      
+      <form @submit.prevent="handleLogin">
+        <div class="form-group">
+          <label for="username">Pseudo</label>
+          <input
+            id="username"
+            v-model="username"
+            type="text"
+            placeholder="Entrez votre pseudo"
+            required
+          />
         </div>
-        <div class="features">
-          <div class="feature">
-            <span class="icon">🎬</span>
-            <p>Accédez à des milliers de citations</p>
-          </div>
-          <div class="feature">
-            <span class="icon">⭐</span>
-            <p>Marquez vos citations préférées</p>
-          </div>
-          <div class="feature">
-            <span class="icon">🎭</span>
-            <p>Explorez par film et acteur</p>
-          </div>
+
+        <div class="form-group">
+          <label for="password">Mot de passe</label>
+          <input
+            id="password"
+            v-model="password"
+            type="password"
+            placeholder="Entrez votre mot de passe"
+            required
+          />
         </div>
-      </div>
 
-      <div class="login-right">
-        <div class="login-card">
-          <h2>Connexion</h2>
-          <p class="login-subtitle">Bienvenue sur CineQuote</p>
-          
-          <form @submit.prevent="handleLogin">
-            <div class="form-group">
-              <label for="username">Pseudo</label>
-              <input
-                id="username"
-                v-model="username"
-                type="text"
-                placeholder="Entrez votre pseudo"
-                required
-              />
-            </div>
+        <button type="submit" class="login-btn">Connexion</button>
+      </form>
 
-            <div class="form-group">
-              <label for="password">Mot de passe</label>
-              <input
-                id="password"
-                v-model="password"
-                type="password"
-                placeholder="Entrez votre mot de passe"
-                required
-              />
-            </div>
+      <p v-if="error" class="error-message">{{ error }}</p>
 
-            <button type="submit" class="login-btn">Connexion</button>
-          </form>
-
-          <p v-if="error" class="error-message">{{ error }}</p>
-
-          <div class="login-footer">
-            <p>Pas encore de compte? <a href="#signup">S'inscrire</a></p>
-          </div>
-        </div>
+      <div class="login-footer">
+        <p>Pas encore de compte? <a href="#signup">S'inscrire</a></p>
       </div>
     </div>
   </div>
@@ -114,97 +89,27 @@ const handleLogin = async () => {
   box-sizing: border-box;
 }
 
-html, body {
-  margin: 0;
-  padding: 0;
-  width: 100%;
-  height: 100%;
-}
-
 .login-container {
   display: flex;
-  width: 100vw;
-  height: 100vh;
-  margin: 0;
-  padding: 0;
-}
-
-.login-wrapper {
-  display: flex;
-  width: 100vw;
-  height: 100vh;
-  background: white;
-  overflow: hidden;
-}
-
-.login-left {
-  flex: 1;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  padding: 80px 60px;
-  display: flex;
-  flex-direction: column;
   justify-content: center;
-}
-
-.branding {
-  margin-bottom: 60px;
-}
-
-.app-title {
-  font-size: 48px;
-  font-weight: 800;
-  margin-bottom: 10px;
-  letter-spacing: -1px;
-}
-
-.app-subtitle {
-  font-size: 18px;
-  opacity: 0.9;
-  font-weight: 300;
-}
-
-.features {
-  display: flex;
-  flex-direction: column;
-  gap: 30px;
-}
-
-.feature {
-  display: flex;
-  align-items: flex-start;
-  gap: 15px;
-}
-
-.icon {
-  font-size: 32px;
-  flex-shrink: 0;
-  position: relative;
-  top: -2px;
-}
-
-.feature p {
-  font-size: 16px;
-  line-height: 1.5;
-  opacity: 0.95;
-}
-
-.login-right {
-  flex: 1;
-  padding: 80px 60px;
-  display: flex;
   align-items: center;
-  justify-content: center;
-  background: white;
+  width: 100vw;
+  height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 20px;
 }
 
 .login-card {
+  background: white;
+  border-radius: 12px;
+  padding: 40px;
   width: 100%;
   max-width: 400px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
 }
 
 h2 {
-  font-size: 32px;
+  font-size: 28px;
   color: #333;
   margin-bottom: 8px;
   font-weight: 700;
@@ -299,53 +204,17 @@ input:focus {
   color: #764ba2;
 }
 
-@media (max-width: 1024px) {
-  .login-left {
-    padding: 60px 40px;
-  }
-
-  .login-right {
-    padding: 60px 40px;
-  }
-
-  .app-title {
-    font-size: 40px;
-  }
-
-  h2 {
-    font-size: 28px;
-  }
-}
-
-@media (max-width: 768px) {
-  .login-wrapper {
-    flex-direction: column;
-    height: auto;
-  }
-
-  .login-left {
-    padding: 40px 30px;
-    min-height: 300px;
-  }
-
-  .app-title {
-    font-size: 32px;
-  }
-
-  .branding {
-    margin-bottom: 30px;
-  }
-
-  .features {
-    gap: 15px;
-  }
-
-  .login-right {
-    padding: 40px 30px;
+@media (max-width: 480px) {
+  .login-card {
+    padding: 30px 20px;
   }
 
   h2 {
     font-size: 24px;
+  }
+
+  .login-container {
+    padding: 15px;
   }
 }
 </style>
