@@ -4,12 +4,9 @@ import logger from "morgan";
 import mongoose from "mongoose";
 import * as dotenv from "dotenv";
 import cookieParser from "cookie-parser"
-<<<<<<< HEAD
 import path from "path";
 import { fileURLToPath } from "url";
-=======
 import cors from "cors"
->>>>>>> auth-registerForm
 
 import indexRouter from "./routes/index.js";
 import usersRouter from "./routes/users.js";
