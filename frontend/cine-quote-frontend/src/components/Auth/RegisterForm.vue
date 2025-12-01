@@ -72,7 +72,7 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://cinequote-api.onrender.com'
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://cinequote-api.onrender.com/api/auth/register'
 
 const router = useRouter()
 const name = ref('')
