@@ -53,10 +53,10 @@
         </div>
       </section>
 
-      <button class="explore-button" type="button">
+      <router-link class="explore-button" to="/explore">
         <span>Explorer par émotion</span>
         <span class="explore-icon">🔍</span>
-      </button>
+      </router-link>
     </main>
   </div>
 </template>
