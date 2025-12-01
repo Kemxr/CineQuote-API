@@ -67,7 +67,9 @@
   display: flex;
   flex-direction: column;
   padding: 24px 32px;
-  background: #050b1a;
+  background:
+    radial-gradient(circle at 0% 0%, #3b82f6 0, #020617 45%),
+    radial-gradient(circle at 50% 120%, #7c3aed 0, #020617 55%);
   color: #f5f7ff;
   font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text",
     sans-serif;
@@ -118,6 +120,8 @@
   padding-top: 0;
 }
 
+/* Carte principale */
+
 .quote-card {
   position: relative;
   width: 100%;
@@ -128,10 +132,11 @@
   flex-direction: column;
   border-radius: 24px;
   overflow: hidden;
-  background-image:
-    radial-gradient(circle at 0 0, rgba(138, 180, 248, 0.3), transparent 55%),
-    radial-gradient(circle at 100% 0, rgba(255, 193, 7, 0.2), transparent 50%),
-    linear-gradient(135deg, #101426, #050b1a);
+  background: linear-gradient(
+    145deg,
+    rgba(15, 23, 42, 0.96),
+    rgba(15, 23, 42, 0.9)
+  );
   box-shadow: 0 32px 80px rgba(0, 0, 0, 0.75);
 }
 
@@ -190,6 +195,8 @@
   opacity: 0.9;
 }
 
+/* Badges */
+
 .badge {
   position: relative;
   z-index: 2;
@@ -224,6 +231,8 @@
   color: #1b1305;
 }
 
+/* Bouton Ajouter */
+
 .quote-footer {
   position: relative;
   z-index: 1;
@@ -253,6 +262,8 @@
   font-size: 16px;
 }
 
+/* Bouton Explorer */
+
 .explore-button {
   margin-top: 24px;
   width: 100%;
@@ -277,6 +288,8 @@
 .explore-icon {
   font-size: 16px;
 }
+
+/* Responsive */
 
 @media (max-width: 768px) {
   .home-page {

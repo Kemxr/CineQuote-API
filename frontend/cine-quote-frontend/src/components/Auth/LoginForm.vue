@@ -82,142 +82,182 @@ const handleLogin = async () => {
 }
 </script>
 
-<style scoped>
-* {
+<style scoped>* {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text",
+    "Segoe UI", sans-serif;
 }
 
+/* Fond plein écran + gradient sombre */
 .login-container {
   display: flex;
   justify-content: center;
   align-items: center;
   width: 100vw;
   height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  padding: 20px;
+  padding: 24px;
+  background: radial-gradient(circle at 0% 0%, #3a5bff 0, transparent 45%),
+              radial-gradient(circle at 100% 100%, #a855ff 0, transparent 45%),
+              #050816;
+  color: #f9fafb;
 }
 
+/* Carte type “card” centrale, arrondie, effet verre */
 .login-card {
-  background: white;
-  border-radius: 12px;
-  padding: 40px;
+  position: relative;
   width: 100%;
-  max-width: 400px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  max-width: 420px;
+  padding: 28px 24px 24px;
+  border-radius: 28px;
+  background: linear-gradient(145deg, rgba(15, 23, 42, 0.9), rgba(15, 23, 42, 0.75));
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  box-shadow:
+    0 32px 80px rgba(15, 23, 42, 0.85),
+    0 0 0 1px rgba(15, 23, 42, 0.8);
+  backdrop-filter: blur(24px);
 }
 
+/* Titre + sous-titre proches de ton mockup */
 h2 {
-  font-size: 28px;
-  color: #333;
-  margin-bottom: 8px;
+  font-size: 24px;
   font-weight: 700;
+  letter-spacing: 0.03em;
+  color: #f9fafb;
+  margin-bottom: 4px;
 }
 
 .login-subtitle {
-  color: #999;
   font-size: 14px;
-  margin-bottom: 30px;
+  color: #9ca3af;
+  margin-bottom: 24px;
 }
 
+/* Formulaire vertical + spacing */
 form {
   display: flex;
   flex-direction: column;
-  gap: 20px;
-  margin-bottom: 30px;
+  gap: 18px;
+  margin-bottom: 20px;
 }
 
 .form-group {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
 }
 
 label {
-  font-weight: 600;
-  color: #333;
-  font-size: 14px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #e5e7eb;
+  text-align: left;
 }
 
+/* Inputs type “pill” foncés */
 input {
-  padding: 14px 16px;
-  border: 2px solid #e0e0e0;
-  border-radius: 8px;
+  padding: 12px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  background: rgba(15, 23, 42, 0.85);
+  color: #e5e7eb;
   font-size: 14px;
-  transition: all 0.3s;
-  font-family: inherit;
+  outline: none;
+  transition: border-color 0.25s ease, box-shadow 0.25s ease,
+              background-color 0.25s ease, transform 0.1s ease;
+}
+
+input::placeholder {
+  color: #6b7280;
 }
 
 input:focus {
-  outline: none;
-  border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  border-color: #a855ff;
+  background: rgba(15, 23, 42, 0.95);
+  box-shadow:
+    0 0 0 1px rgba(168, 85, 247, 0.7),
+    0 0 0 10px rgba(88, 28, 135, 0.35);
+  transform: translateY(-1px);
 }
 
+/* Bouton principal violet comme l’onglet actif du bas */
 .login-btn {
-  padding: 14px 16px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
+  margin-top: 6px;
+  width: 100%;
+  padding: 13px 14px;
+  border-radius: 999px;
   border: none;
-  border-radius: 8px;
-  font-size: 16px;
+  background: linear-gradient(135deg, #a855ff 0%, #6366f1 100%);
+  color: #f9fafb;
+  font-size: 15px;
   font-weight: 600;
+  letter-spacing: 0.03em;
   cursor: pointer;
-  transition: all 0.3s;
-  margin-top: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  box-shadow: 0 18px 40px rgba(88, 28, 135, 0.7);
+  transition: transform 0.12s ease, box-shadow 0.12s ease, filter 0.12s ease;
 }
 
 .login-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+  filter: brightness(1.05);
+  box-shadow: 0 24px 60px rgba(88, 28, 135, 0.9);
 }
 
 .login-btn:active {
   transform: translateY(0);
+  box-shadow: 0 14px 30px rgba(88, 28, 135, 0.7);
 }
 
+/* Message d’erreur discret mais visible */
 .error-message {
-  color: #e74c3c;
-  font-size: 14px;
+  margin-top: 4px;
+  margin-bottom: 6px;
+  font-size: 13px;
   text-align: center;
-  padding: 12px;
-  background: #fadbd8;
-  border-radius: 6px;
-  margin-bottom: 20px;
+  color: #fecaca;
+  background: rgba(127, 29, 29, 0.25);
+  border-radius: 999px;
+  padding: 8px 12px;
+  border: 1px solid rgba(248, 113, 113, 0.6);
 }
 
+/* Footer type “petite ligne de texte” */
 .login-footer {
   text-align: center;
-  color: #666;
-  font-size: 14px;
+  font-size: 13px;
+  color: #9ca3af;
 }
 
-.login-footer a,
-.login-footer router-link {
-  color: #667eea;
-  text-decoration: none;
+.login-footer a {
+  color: #c4b5fd;
   font-weight: 600;
-  transition: color 0.3s;
-  cursor: pointer;
+  text-decoration: none;
+  margin-left: 4px;
+  transition: color 0.2s ease;
 }
 
-.login-footer a:hover,
-.login-footer router-link:hover {
-  color: #764ba2;
+.login-footer a:hover {
+  color: #a855ff;
 }
 
+/* Mobile */
 @media (max-width: 480px) {
   .login-card {
-    padding: 30px 20px;
+    padding: 24px 18px 20px;
+    border-radius: 24px;
   }
 
   h2 {
-    font-size: 24px;
+    font-size: 22px;
   }
 
   .login-container {
-    padding: 15px;
+    padding: 18px;
   }
 }
 </style>
