@@ -6,12 +6,23 @@
       
       <form @submit.prevent="handleRegister">
         <div class="form-group">
-          <label for="username">Pseudo</label>
+          <label for="name">Nom</label>
           <input
-            id="username"
-            v-model="username"
+            id="name"
+            v-model="name"
             type="text"
-            placeholder="Entrez votre pseudo"
+            placeholder="Entrez votre nom"
+            required
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="email">Email</label>
+          <input
+            id="email"
+            v-model="email"
+            type="email"
+            placeholder="Entrez votre email"
             required
           />
         </div>
@@ -53,7 +64,8 @@
 <script setup>
 import { ref } from 'vue'
 
-const username = ref('')
+const name = ref('')
+const email = ref('')
 const password = ref('')
 const confirmPassword = ref('')
 const error = ref('')
@@ -61,7 +73,7 @@ const error = ref('')
 const handleRegister = async () => {
   error.value = ''
   
-  if (!username.value || !password.value || !confirmPassword.value) {
+  if (!name.value || !email.value || !password.value || !confirmPassword.value) {
     error.value = 'Veuillez remplir tous les champs'
     return
   }
@@ -83,7 +95,8 @@ const handleRegister = async () => {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        username: username.value,
+        name: name.value,
+        email: email.value,
         password: password.value
       })
     })
