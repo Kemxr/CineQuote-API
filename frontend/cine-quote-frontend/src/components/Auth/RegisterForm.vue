@@ -49,10 +49,17 @@
           />
         </div>
 
-        <button type="submit" class="register-btn">S'inscrire</button>
+        <button
+          type="submit"
+          class="register-btn"
+          :disabled="isSubmitting"
+        >
+          {{ isSubmitting ? 'Inscription en cours...' : "S'inscrire" }}
+        </button>
       </form>
 
       <p v-if="error" class="error-message">{{ error }}</p>
+      <p v-if="success" class="success-message">{{ success }}</p>
 
       <div class="register-footer">
         <p>Déjà inscrit? <a href="/login">Se connecter</a></p>
@@ -63,16 +70,23 @@
 
 <script setup>
 import { ref } from 'vue'
+import { useRouter } from 'vue-router'
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://cinequote-api.onrender.com'
+
+const router = useRouter()
 const name = ref('')
 const email = ref('')
 const password = ref('')
 const confirmPassword = ref('')
 const error = ref('')
+const success = ref('')
+const isSubmitting = ref(false)
 
 const handleRegister = async () => {
   error.value = ''
-  
+  success.value = ''
+
   if (!name.value || !email.value || !password.value || !confirmPassword.value) {
     error.value = 'Veuillez remplir tous les champs'
     return
@@ -88,8 +102,10 @@ const handleRegister = async () => {
     return
   }
 
+  isSubmitting.value = true
+
   try {
-    const response = await fetch('http://localhost:3000/api/auth/register', {
+    const response = await fetch(`${API_BASE_URL}/api/auth/register`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -101,18 +117,22 @@ const handleRegister = async () => {
       })
     })
 
+    const data = await response.json()
+
     if (!response.ok) {
-      const data = await response.json()
       error.value = data.message || 'Erreur lors de l\'inscription'
       return
     }
 
-    const data = await response.json()
-    localStorage.setItem('token', data.token)
-    window.location.href = '/'
+    success.value = 'Compte créé avec succès ! Redirection vers la connexion...'
+    setTimeout(() => {
+      router.push('/login')
+    }, 1500)
   } catch (err) {
     error.value = 'Erreur de connexion au serveur'
     console.error(err)
+  } finally {
+    isSubmitting.value = false
   }
 }
 </script>
@@ -218,6 +238,16 @@ input:focus {
   text-align: center;
   padding: 12px;
   background: #fadbd8;
+  border-radius: 6px;
+  margin-bottom: 20px;
+}
+
+.success-message {
+  color: #1e8449;
+  font-size: 14px;
+  text-align: center;
+  padding: 12px;
+  background: #d5f5e3;
   border-radius: 6px;
   margin-bottom: 20px;
 }
