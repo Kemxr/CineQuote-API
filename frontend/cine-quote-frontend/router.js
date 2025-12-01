@@ -3,6 +3,7 @@ import LoginForm from './src/components/Auth/LoginForm.vue';
 import HomeView from './src/views/HomeView.vue';
 import RegisterForm from './src/components/Auth/RegisterForm.vue';
 
+
 const routes = [
   {
     path: '/',
@@ -18,7 +19,7 @@ const routes = [
     path: '/register',
     name: 'RegisterForm',
     component: RegisterForm
-  },
+  }
 ];
 
 const router = createRouter({
