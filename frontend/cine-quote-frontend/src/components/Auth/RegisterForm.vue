@@ -72,8 +72,6 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://cinequote-api.onrender.com/api/auth/register'
-
 const router = useRouter()
 const name = ref('')
 const email = ref('')
@@ -91,12 +89,10 @@ const handleRegister = async () => {
     error.value = 'Veuillez remplir tous les champs'
     return
   }
-
   if (password.value !== confirmPassword.value) {
     error.value = 'Les mots de passe ne correspondent pas'
     return
   }
-
   if (password.value.length < 6) {
     error.value = 'Le mot de passe doit contenir au moins 6 caractères'
     return
@@ -105,32 +101,27 @@ const handleRegister = async () => {
   isSubmitting.value = true
 
   try {
-    const response = await fetch(`${API_BASE_URL}/api/auth/register`, {
+    const response = await fetch('/api/auth/register', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         name: name.value,
         email: email.value,
         password: password.value
-      })
+      }),
+      credentials: 'include'
     })
 
     const data = await response.json()
-
     if (!response.ok) {
       error.value = data.message || 'Erreur lors de l\'inscription'
       return
     }
 
-    success.value = 'Compte créé avec succès ! Redirection vers la connexion...'
-    setTimeout(() => {
-      router.push('/login')
-    }, 1500)
+    success.value = 'Compte créé avec succès ! Redirection...'
+    setTimeout(() => router.push('/login'), 1500)
   } catch (err) {
     error.value = 'Erreur de connexion au serveur'
-    console.error(err)
   } finally {
     isSubmitting.value = false
   }

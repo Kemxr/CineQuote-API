@@ -41,43 +41,42 @@
 
 <script setup>
 import { ref } from 'vue'
+import { useRouter } from 'vue-router'
 
-const username = ref('')
+const router = useRouter()
+const email = ref('')
 const password = ref('')
 const error = ref('')
+const isSubmitting = ref(false)
 
 const handleLogin = async () => {
   error.value = ''
-  
-  if (!username.value || !password.value) {
+  if (!email.value || !password.value) {
     error.value = 'Veuillez remplir tous les champs'
     return
   }
-
+  isSubmitting.value = true
   try {
-    const response = await fetch('https://cinequote-api.onrender.com/api/auth/login', {
+    const response = await fetch('/api/auth/login', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        username: username.value,
+        email: email.value,
         password: password.value
-      })
+      }),
+      credentials: 'include'
     })
-
+    const data = await response.json()
     if (!response.ok) {
-      const data = await response.json()
       error.value = data.message || 'Erreur de connexion'
       return
     }
-
-    const data = await response.json()
-    localStorage.setItem('token', data.token)
-    window.location.href = '/'
+    // Optionnel: stocker user dans le store si besoin
+    router.push('/')
   } catch (err) {
     error.value = 'Erreur de connexion au serveur'
-    console.error(err)
+  } finally {
+    isSubmitting.value = false
   }
 }
 </script>

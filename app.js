@@ -6,7 +6,6 @@ import * as dotenv from "dotenv";
 import cookieParser from "cookie-parser"
 import path from "path";
 import { fileURLToPath } from "url";
-import cors from "cors"
 
 import indexRouter from "./routes/index.js";
 import usersRouter from "./routes/users.js";
@@ -25,24 +24,6 @@ mongoose.connect(process.env.DATABASE_URL || "mongodb://localhost/cine-quote-api
 const app = express();
 app.use(express.static(path.join(__dirname,"/frontend/cine-quote-frontend/dist")));
 
-const allowedOrigins = [
-  process.env.FRONTEND_URL || "http://localhost:5173",
-  "https://cinequote.fr"
-];
-
-app.use(
-  cors({
-    origin(origin, callback) {
-      if (!origin || allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      }
-      callback(new Error("Origin not allowed by CORS"));
-    },
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"]
-  })
-);
 
 app.use(logger("dev"));
 app.use(express.json());
