@@ -4,6 +4,8 @@ import logger from "morgan";
 import mongoose from "mongoose";
 import * as dotenv from "dotenv";
 import cookieParser from "cookie-parser"
+import path from "path";
+import { fileURLToPath } from "url";
 
 import indexRouter from "./routes/index.js";
 import usersRouter from "./routes/users.js";
@@ -12,18 +14,21 @@ import favoritesRouter from "./routes/favorites.js";
 import filmsRouter from "./routes/films.js"
 import quotesRouter from "./routes/quotes.js"
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 dotenv.config();
 
 mongoose.connect(process.env.DATABASE_URL || "mongodb://localhost/cine-quote-api");
 
 const app = express();
+app.use(express.static(path.join(__dirname,"/frontend/cine-quote-frontend/dist")));
 
 app.use(logger("dev"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
 app.use(cookieParser());
-app.use("/", indexRouter);
 app.use("/api/users", usersRouter);
 app.use("/api/auth", authRouter);
 app.use("/api/favorites", favoritesRouter);
