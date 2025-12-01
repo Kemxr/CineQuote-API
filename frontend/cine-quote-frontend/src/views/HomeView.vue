@@ -287,6 +287,7 @@
   .content {
     align-items: center;
     justify-content: flex-start;
+    margin-top: 24px;
   }
 
   .quote-card {
