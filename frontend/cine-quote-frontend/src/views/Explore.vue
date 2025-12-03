@@ -85,13 +85,11 @@ const error = ref(null);
 
 const emotions = [
   { id: "all", label: "Tout", icon: "⭐" },
-  { id: "love", label: "Amour", icon: "❤️" },
   { id: "joy", label: "Joie", icon: "😊" },
-  { id: "motivation", label: "Motivation", icon: "💪" },
+  { id: "sadness", label: "Tristesse", icon: "😭" },
+  { id: "love", label: "Amour", icon: "❤️" },
   { id: "nostalgia", label: "Nostalgie", icon: "🌙" },
-  { id: "sadness", label: "Tristesse", icon: "😢" },
-  { id: "hope", label: "Espoir", icon: "✨" },
-  { id: "anger", label: "Colère", icon: "🔥" },
+  { id: "anxiety", label: "Anxiété", icon: "🚩" },
 ];
 
 async function fetchQuotes() {
