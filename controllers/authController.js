@@ -39,6 +39,26 @@ export const registerUser = async (req, res) => {
 };
 
 // Connexion
+// Get user profile
+export const getUserProfile = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select('-password');
+    if (!user) {
+      return res.status(404).json({ message: 'Utilisateur non trouvé' });
+    }
+    res.json({
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      createdAt: user.createdAt
+    });
+  } catch (error) {
+    console.error('Erreur lors de la récupération du profil:', error);
+    res.status(500).json({ message: 'Erreur serveur lors de la récupération du profil' });
+  }
+};
+
 export const loginUser = async (req, res) => {
   const { email, password, rememberMe = false } = req.body;
   const user = await User.findOne({ email });
