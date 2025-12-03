@@ -14,7 +14,7 @@
           v-model="search"
           type="search"
           class="search-input"
-          placeholder="Rechercher un film ou une citation..."
+          placeholder="Rechercher une citation..."
         />
       </div>
 
@@ -84,12 +84,12 @@ const loading = ref(false);
 const error = ref(null);
 
 const emotions = [
-  { id: "all", label: "Tout", icon: "⭐" },
-  { id: "joy", label: "Joie", icon: "😊" },
-  { id: "sadness", label: "Tristesse", icon: "😭" },
-  { id: "love", label: "Amour", icon: "❤️" },
-  { id: "nostalgia", label: "Nostalgie", icon: "🌙" },
-  { id: "anxiety", label: "Anxiété", icon: "🚩" },
+  { id: "tout", label: "Tout", icon: "⭐" },
+  { id: "joie", label: "Joie", icon: "😊" },
+  { id: "tristesse", label: "Tristesse", icon: "😭" },
+  { id: "amour", label: "Amour", icon: "❤️" },
+  { id: "nostalgie", label: "Nostalgie", icon: "🌙" },
+  { id: "anxiété", label: "Anxiété", icon: "🚩" },
 ];
 
 async function fetchQuotes() {
