@@ -43,6 +43,7 @@
           v-for="quote in quotes"
           :key="quote._id"
           class="quote-card-item"
+          @click="openQuoteDetail(quote)"
         >
           <div class="quote-card-inner">
             <div class="quote-card-image-wrapper" v-if="quote.film?.image">
@@ -65,7 +66,7 @@
               :class="['quote-card-fav', { 'quote-card-fav--active': isFavorite(quote._id) }]"
               type="button" 
               :aria-label="isFavorite(quote._id) ? 'Retirer des favoris' : 'Ajouter aux favoris'"
-              @click="toggleFavorite(quote._id)"
+              @click.stop="toggleFavorite(quote._id)"
             >
               {{ isFavorite(quote._id) ? '♥' : '♡' }}
             </button>
@@ -73,6 +74,51 @@
         </article>
       </div>
     </main>
+
+    <!-- Modal Détail Citation -->
+    <div v-if="selectedQuote" class="modal-overlay" @click="closeQuoteDetail">
+      <div class="modal-content" @click.stop>
+        <button class="modal-close" @click="closeQuoteDetail" aria-label="Fermer">
+          ✕
+        </button>
+
+        <div class="modal-header">
+          <div class="modal-film-image" v-if="selectedQuote.film?.image">
+            <img
+              :src="selectedQuote.film.image"
+              :alt="selectedQuote.film.title"
+            />
+          </div>
+        </div>
+
+        <div class="modal-body">
+          <p class="modal-quote-text">"{{ selectedQuote.text }}"</p>
+
+          <div v-if="selectedQuote.film" class="modal-film-info">
+            <h2 class="modal-film-title">{{ selectedQuote.film.title }}</h2>
+            <p class="modal-film-detail" v-if="selectedQuote.film.year">
+              <span class="detail-label">Année :</span> {{ selectedQuote.film.year }}
+            </p>
+            <p class="modal-film-detail" v-if="selectedQuote.film.director">
+              <span class="detail-label">Réalisateur :</span> {{ selectedQuote.film.director }}
+            </p>
+          </div>
+
+          <div v-if="selectedQuote.emotion" class="modal-emotion">
+            <span class="emotion-badge">{{ getEmotionEmoji(selectedQuote.emotion) }} {{ selectedQuote.emotion }}</span>
+          </div>
+
+          <button 
+            :class="['modal-fav-btn', { 'modal-fav-btn--active': isFavorite(selectedQuote._id) }]"
+            type="button"
+            :aria-label="isFavorite(selectedQuote._id) ? 'Retirer des favoris' : 'Ajouter aux favoris'"
+            @click.stop="toggleFavorite(selectedQuote._id)"
+          >
+            {{ isFavorite(selectedQuote._id) ? '♥' : '♡' }}
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -83,11 +129,12 @@ import { useRouter } from "vue-router";
 const router = useRouter();
 
 const search = ref("");
-const selectedEmotion = ref("all");
+const selectedEmotion = ref("tout");
 const quotes = ref([]);
 const loading = ref(false);
 const error = ref(null);
 const favorites = ref([]);
+const selectedQuote = ref(null);
 
 const emotions = [
   { id: "tout", label: "Tout", icon: "⭐" },
@@ -107,7 +154,8 @@ async function fetchQuotes() {
       limit: 100,
     };
 
-    if (selectedEmotion.value !== "all") {
+    // N'ajouter le filtre émotion que si ce n'est pas "tout"
+    if (selectedEmotion.value !== "tout") {
       params.emotion = selectedEmotion.value;
     }
 
@@ -140,7 +188,6 @@ function selectEmotion(id) {
   selectedEmotion.value = id;
 }
 
-// Fetch user's favorites
 async function fetchFavorites() {
   try {
     const response = await fetch("/api/favorites", {
@@ -160,18 +207,13 @@ async function fetchFavorites() {
   }
 }
 
-// Check if a quote is in favorites
 function isFavorite(quoteId) {
   return favorites.value.includes(quoteId);
 }
 
-// Toggle favorite status
 async function toggleFavorite(quoteId) {
   try {
     if (isFavorite(quoteId)) {
-      // Remove from favorites
-      // Calls DELETE /api/favorites endpoint which uses:
-      // - favoriteController.js: removeFavorite() function
       const response = await fetch("/api/favorites", {
         method: "DELETE",
         headers: {
@@ -185,9 +227,6 @@ async function toggleFavorite(quoteId) {
         favorites.value = favorites.value.filter(id => id !== quoteId);
       }
     } else {
-      // Add to favorites
-      // Calls POST /api/favorites endpoint which uses:
-      // - favoriteController.js: addFavorite() function
       const response = await fetch("/api/favorites", {
         method: "POST",
         headers: {
@@ -210,6 +249,25 @@ async function toggleFavorite(quoteId) {
     console.error("Error toggling favorite:", e);
     alert("Erreur lors de la modification des favoris");
   }
+}
+
+function openQuoteDetail(quote) {
+  selectedQuote.value = quote;
+}
+
+function closeQuoteDetail() {
+  selectedQuote.value = null;
+}
+
+function getEmotionEmoji(emotion) {
+  const emotionMap = {
+    "joie": "😊",
+    "tristesse": "😭",
+    "amour": "❤️",
+    "nostalgie": "🌙",
+    "anxiété": "🚩"
+  };
+  return emotionMap[emotion] || "⭐";
 }
 
 let searchTimeout = null;
@@ -305,6 +363,11 @@ onMounted(() => {
   color: #e5e7ff;
   font-size: 13px;
   cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.filter-chip:hover {
+  border-color: rgba(148, 163, 213, 0.6);
 }
 
 .filter-chip--active {
@@ -338,6 +401,14 @@ onMounted(() => {
   border: 1px solid rgba(15, 23, 42, 0.9);
   padding: 18px 18px;
   min-height: 96px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.quote-card-item:hover {
+  border-color: rgba(148, 163, 213, 0.4);
+  background: rgba(15, 23, 42, 0.98);
+  transform: translateY(-2px);
 }
 
 .quote-card-inner {
@@ -416,6 +487,187 @@ onMounted(() => {
 }
 
 .quote-card-fav--active:hover {
+  color: #fca5a5;
+}
+
+/* Modal Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 16px;
+  animation: fadeIn 0.3s ease;
+  backdrop-filter: blur(4px);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.modal-content {
+  background: linear-gradient(145deg, rgba(15, 23, 42, 0.98), rgba(15, 23, 42, 0.92));
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  border-radius: 24px;
+  width: 100%;
+  max-width: 500px;
+  max-height: 85vh;
+  overflow-y: auto;
+  position: relative;
+  box-shadow: 0 20px 80px rgba(0, 0, 0, 0.6);
+  animation: popIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes popIn {
+  from {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.modal-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(239, 68, 68, 0.1);
+  color: #fecaca;
+  font-size: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  transition: all 0.2s ease;
+}
+
+.modal-close:hover {
+  background: rgba(239, 68, 68, 0.2);
+}
+
+.modal-header {
+  width: 100%;
+  height: 220px;
+  overflow: hidden;
+  border-radius: 24px 24px 0 0;
+}
+
+.modal-film-image {
+  width: 100%;
+  height: 100%;
+}
+
+.modal-film-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.modal-body {
+  padding: 24px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.modal-quote-text {
+  font-size: 18px;
+  font-weight: 600;
+  color: #e5e7ff;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.modal-film-info {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.modal-film-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #f9fafb;
+  margin: 0;
+}
+
+.modal-film-detail {
+  font-size: 13px;
+  color: #9fa8c6;
+  margin: 0;
+  display: flex;
+  gap: 8px;
+}
+
+.detail-label {
+  font-weight: 600;
+  color: #c4b5fd;
+}
+
+.modal-emotion {
+  display: flex;
+  gap: 8px;
+}
+
+.emotion-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: rgba(168, 85, 247, 0.15);
+  border: 1px solid rgba(168, 85, 247, 0.4);
+  border-radius: 999px;
+  color: #d8b4fe;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.modal-fav-btn {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  border: 2px solid rgba(148, 163, 213, 0.4);
+  background: rgba(15, 23, 42, 0.8);
+  color: #9fa8c6;
+  font-size: 24px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  margin: 8px auto 0;
+}
+
+.modal-fav-btn:hover {
+  color: #fca5a5;
+  transform: scale(1.15);
+  border-color: rgba(248, 113, 113, 0.5);
+}
+
+.modal-fav-btn--active {
+  color: #ef4444;
+  border-color: rgba(248, 113, 113, 0.5);
+}
+
+.modal-fav-btn--active:hover {
   color: #fca5a5;
 }
 
