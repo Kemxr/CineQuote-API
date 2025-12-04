@@ -18,17 +18,17 @@
 
     <!-- Authenticated User Profile -->
     <main v-else-if="user" class="profile-content">
-      <!-- User Card -->
-      <section class="user-card">
-        <div class="user-avatar">
-          <span class="avatar-icon">👤</span>
-        </div>
-        <div class="user-info">
-          <h2 class="user-name">{{ user.name }}</h2>
-          <p class="user-email">{{ user.email }}</p>
-          <p class="user-role">{{ user.role === 'admin' ? 'Administrateur' : 'Utilisateur' }}</p>
-        </div>
-      </section>
+    <!-- User Card -->
+    <section class="user-card">
+      <div class="user-avatar">
+        <span class="avatar-icon">{{ user.name.charAt(0).toUpperCase() }}</span>
+      </div>
+      <div class="user-info">
+        <h2 class="user-name">{{ user.name }}</h2>
+        <p class="user-email">{{ user.email }}</p>
+        <p class="user-role">{{ user.role === 'admin' ? 'Administrateur' : 'Utilisateur' }}</p>
+      </div>
+    </section>
 
       <!-- User Details -->
       <section class="details-section">
@@ -108,7 +108,7 @@
 </template>
 
 <script>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { authAPI } from '@/services/api';
 
@@ -151,32 +151,39 @@ export default {
     const fetchUserProfile = async () => {
       try {
         loading.value = true;
-        // Calls GET /api/auth/profile endpoint which uses:
-        // - authController.js: getUserProfile() function
-        // - This function retrieves user data from the database using User.findById()
-        // - It excludes the password field for security
-        // - Returns: { _id, name, email, role, createdAt }
-        
         const response = await authAPI.getProfile();
         user.value = response.data;
         
-        // TODO: Fetch actual stats and badges from API when available
-        // REAL IMPLEMENTATION would be:
-        // - Create new endpoints in authController.js:
-        //   * getUserStats() - returns { favorites, moviesWatched, quotes }
-        //   * getUserBadges() - returns array of unlocked badges with dates
-        // - Call these endpoints to populate stats and badges
+        // Fetch real favorites count from API
+        await fetchFavoritesCount();
         
-        stats.value = {
-          favorites: 12,
-          moviesWatched: 45,
-          quotes: 128
-        };
+        // TODO: Fetch real stats for moviesWatched and quotes when endpoints are available
+        stats.value.moviesWatched = 45;
+        stats.value.quotes = 158;
       } catch (err) {
         console.error('Error fetching profile:', err);
         user.value = null;
       } finally {
         loading.value = false;
+      }
+    };
+
+    const fetchFavoritesCount = async () => {
+      try {
+        const response = await fetch('/api/favorites', {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          stats.value.favorites = data.length || 0;
+        } else {
+          stats.value.favorites = 0;
+        }
+      } catch (err) {
+        console.error('Error fetching favorites count:', err);
+        stats.value.favorites = 0;
       }
     };
 
@@ -198,6 +205,13 @@ export default {
 
     onMounted(() => {
       fetchUserProfile();
+      
+      // Listen for favorite changes from other components
+      window.addEventListener('favoriteUpdated', fetchFavoritesCount);
+    });
+
+    onUnmounted(() => {
+      window.removeEventListener('favoriteUpdated', fetchFavoritesCount);
     });
 
     return {
@@ -319,12 +333,14 @@ export default {
   border: 1px solid rgba(148, 163, 184, 0.25);
   box-shadow: 0 32px 80px rgba(15, 23, 42, 0.85);
   backdrop-filter: blur(24px);
+  align-items: flex-start;
+  padding-top: 32px;
 }
 
 .user-avatar {
-  width: 80px;
-  height: 80px;
-  border-radius: 16px;
+  width: 100px;
+  height: 100px;
+  border-radius: 20px;
   background: linear-gradient(135deg, #a855ff 0%, #6366f1 100%);
   display: flex;
   align-items: center;
@@ -333,37 +349,44 @@ export default {
 }
 
 .avatar-icon {
-  font-size: 40px;
+  font-size: 48px;
+  font-weight: 700;
+  color: #f9fafb;
 }
 
 .user-info {
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  gap: 4px;
+  justify-content: flex-start;
+  gap: 8px;
+  text-align: left;
+  padding-top: 8px;
 }
 
 .user-name {
-  font-size: 20px;
+  font-size: 24px;
   font-weight: 700;
   color: #f9fafb;
+  margin: 0;
 }
 
 .user-email {
   font-size: 14px;
   color: #9ca3af;
+  margin: 0;
 }
 
 .user-role {
-  font-size: 13px;
-  color: #a855ff;
+  font-size: 14px;
+  color: #c4b5fd;
   font-weight: 600;
+  margin: 0;
 }
 
 /* Details Section */
 .details-section,
 .stats-section,
-.actions-section {
+.badges-section {
   padding: 24px;
   border-radius: 20px;
   background: linear-gradient(145deg, rgba(15, 23, 42, 0.9), rgba(15, 23, 42, 0.75));
@@ -388,6 +411,7 @@ export default {
 .detail-item {
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: 6px;
   padding: 12px;
   background: rgba(30, 41, 59, 0.5);
@@ -412,6 +436,7 @@ export default {
 .active-badge {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
   width: fit-content;
   padding: 4px 12px;
@@ -421,6 +446,7 @@ export default {
   color: #86efac;
   font-size: 13px;
   font-weight: 600;
+  margin: 0 auto;
 }
 
 .active-badge::before {
@@ -524,7 +550,6 @@ export default {
   font-size: 14px;
 }
 
-
 /* Auth Container */
 .auth-container {
   display: flex;
@@ -621,8 +646,7 @@ export default {
   }
 
   .details-grid,
-  .stats-grid,
-  .actions-grid {
+  .stats-grid {
     grid-template-columns: 1fr;
   }
 
@@ -644,7 +668,7 @@ export default {
   .user-card,
   .details-section,
   .stats-section,
-  .actions-section {
+  .badges-section {
     padding: 16px;
     border-radius: 16px;
   }
