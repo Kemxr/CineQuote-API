@@ -61,8 +61,13 @@
               </div>
             </div>
 
-            <button class="quote-card-fav" type="button" aria-label="Ajouter aux favoris">
-              ♡
+            <button 
+              :class="['quote-card-fav', { 'quote-card-fav--active': isFavorite(quote._id) }]"
+              type="button" 
+              :aria-label="isFavorite(quote._id) ? 'Retirer des favoris' : 'Ajouter aux favoris'"
+              @click="toggleFavorite(quote._id)"
+            >
+              {{ isFavorite(quote._id) ? '♥' : '♡' }}
             </button>
           </div>
         </article>
@@ -82,6 +87,7 @@ const selectedEmotion = ref("all");
 const quotes = ref([]);
 const loading = ref(false);
 const error = ref(null);
+const favorites = ref([]);
 
 const emotions = [
   { id: "tout", label: "Tout", icon: "⭐" },
@@ -134,6 +140,78 @@ function selectEmotion(id) {
   selectedEmotion.value = id;
 }
 
+// Fetch user's favorites
+async function fetchFavorites() {
+  try {
+    const response = await fetch("/api/favorites", {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      credentials: "include"
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      favorites.value = (data || []).map(q => q._id);
+    }
+  } catch (e) {
+    console.error("Error fetching favorites:", e);
+  }
+}
+
+// Check if a quote is in favorites
+function isFavorite(quoteId) {
+  return favorites.value.includes(quoteId);
+}
+
+// Toggle favorite status
+async function toggleFavorite(quoteId) {
+  try {
+    if (isFavorite(quoteId)) {
+      // Remove from favorites
+      // Calls DELETE /api/favorites endpoint which uses:
+      // - favoriteController.js: removeFavorite() function
+      const response = await fetch("/api/favorites", {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        credentials: "include",
+        body: JSON.stringify({ quoteId })
+      });
+
+      if (response.ok) {
+        favorites.value = favorites.value.filter(id => id !== quoteId);
+      }
+    } else {
+      // Add to favorites
+      // Calls POST /api/favorites endpoint which uses:
+      // - favoriteController.js: addFavorite() function
+      const response = await fetch("/api/favorites", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        credentials: "include",
+        body: JSON.stringify({ quoteId })
+      });
+
+      if (response.ok) {
+        favorites.value.push(quoteId);
+      } else if (response.status === 401) {
+        alert("Veuillez vous connecter pour ajouter des favoris");
+      } else {
+        const data = await response.json();
+        alert(data.message || "Erreur lors de l'ajout aux favoris");
+      }
+    }
+  } catch (e) {
+    console.error("Error toggling favorite:", e);
+    alert("Erreur lors de la modification des favoris");
+  }
+}
+
 let searchTimeout = null;
 
 watch([selectedEmotion, search], () => {
@@ -144,6 +222,7 @@ watch([selectedEmotion, search], () => {
 });
 
 onMounted(() => {
+  fetchFavorites();
   fetchQuotes();
 });
 </script>
@@ -323,6 +402,21 @@ onMounted(() => {
   cursor: pointer;
   font-size: 18px;
   margin-left: auto;
+  transition: color 0.2s ease, transform 0.2s ease;
+  flex-shrink: 0;
+}
+
+.quote-card-fav:hover {
+  color: #fca5a5;
+  transform: scale(1.2);
+}
+
+.quote-card-fav--active {
+  color: #ef4444;
+}
+
+.quote-card-fav--active:hover {
+  color: #fca5a5;
 }
 
 @media (min-width: 768px) {

@@ -1,5 +1,115 @@
 <script setup>
- 
+import { ref, onMounted } from "vue";
+import { useRouter } from "vue-router";
+
+const router = useRouter();
+
+const quote = ref(null);
+const isFav = ref(false);
+const loading = ref(true);
+
+// Fetch daily quote
+async function fetchDailyQuote() {
+  try {
+    loading.value = true;
+    const response = await fetch("/api/quotes?limit=1");
+    
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+
+    const data = await response.json();
+    quote.value = data.items?.[0] || null;
+    
+    // Check if this quote is in favorites
+    if (quote.value) {
+      await checkIfFavorite(quote.value._id);
+    }
+  } catch (e) {
+    console.error("Error fetching daily quote:", e);
+  } finally {
+    loading.value = false;
+  }
+}
+
+// Check if quote is favorited
+async function checkIfFavorite(quoteId) {
+  try {
+    const response = await fetch("/api/favorites", {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      credentials: "include"
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      const favorites = (data || []).map(q => q._id);
+      isFav.value = favorites.includes(quoteId);
+    }
+  } catch (e) {
+    console.error("Error checking favorite:", e);
+  }
+}
+
+// Toggle favorite
+async function toggleFavorite() {
+  if (!quote.value) return;
+
+  try {
+    if (isFav.value) {
+      // Remove from favorites
+      // Calls DELETE /api/favorites endpoint which uses:
+      // - favoriteController.js: removeFavorite() function
+      const response = await fetch("/api/favorites", {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        credentials: "include",
+        body: JSON.stringify({ quoteId: quote.value._id })
+      });
+
+      if (response.ok) {
+        isFav.value = false;
+      }
+    } else {
+      // Add to favorites
+      // Calls POST /api/favorites endpoint which uses:
+      // - favoriteController.js: addFavorite() function
+      const response = await fetch("/api/favorites", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        credentials: "include",
+        body: JSON.stringify({ quoteId: quote.value._id })
+      });
+
+      if (response.ok) {
+        isFav.value = true;
+      } else if (response.status === 401) {
+        alert("Veuillez vous connecter pour ajouter des favoris");
+      } else {
+        const data = await response.json();
+        alert(data.message || "Erreur lors de l'ajout aux favoris");
+      }
+    }
+  } catch (e) {
+    console.error("Error toggling favorite:", e);
+    alert("Erreur lors de la modification des favoris");
+  }
+}
+
+// Navigate to profile
+function goToProfile() {
+  router.push("/profile");
+}
+
+onMounted(() => {
+  fetchDailyQuote();
+});
 </script>
 
 <template>
@@ -9,23 +119,23 @@
         <h1 class="logo">CineMood</h1>
         <p class="subtitle">Citation du jour</p>
       </div>
-      <button class="profile-btn" type="button" aria-label="Profil">
+      <button class="profile-btn" type="button" aria-label="Profil" @click="goToProfile">
         <span class="profile-icon">👤</span>
       </button>
     </header>
 
     <main class="content">
-      <section class="quote-card">
+      <section class="quote-card" v-if="quote">
         <!-- Badge heure en haut à gauche -->
         <div class="badge badge-time">
           <span class="badge-icon">⏱</span>
-          <span>12:25:15</span>
+          <span>{{ new Date().toLocaleTimeString('fr-FR') }}</span>
         </div>
 
         <!-- Badge émotion en haut à droite -->
-        <div class="badge badge-mood">
-          <span>😨</span>
-          <span>Peur</span>
+        <div class="badge badge-mood" v-if="quote.emotion">
+          <span>{{ getEmotionIcon(quote.emotion) }}</span>
+          <span>{{ quote.emotion }}</span>
         </div>
 
         <!-- Contenu de la citation -->
@@ -34,21 +144,26 @@
             <div class="quote-icon">✨</div>
 
             <p class="quote-text">
-              "Je vois des gens qui sont morts."
+              "{{ quote.text }}"
             </p>
 
-            <div class="quote-meta">
-              <span class="movie-title">Sixième Sens</span>
-              <span class="movie-year">(1999)</span>
+            <div class="quote-meta" v-if="quote.film">
+              <span class="movie-title">{{ quote.film.title }}</span>
+              <span class="movie-year">({{ quote.film.year }})</span>
             </div>
           </div>
         </div>
 
         <!-- Barre d'action en bas -->
         <div class="quote-footer">
-          <button class="favorite-btn" type="button">
-            <span class="heart">♡</span>
-            <span>Ajouter</span>
+          <button 
+            class="favorite-btn" 
+            type="button"
+            :class="{ 'favorite-btn--active': isFav }"
+            @click="toggleFavorite"
+          >
+            <span class="heart">{{ isFav ? '♥' : '♡' }}</span>
+            <span>{{ isFav ? 'Ajouté' : 'Ajouter' }}</span>
           </button>
         </div>
       </section>
@@ -60,6 +175,20 @@
     </main>
   </div>
 </template>
+
+<script>
+function getEmotionIcon(emotion) {
+  const icons = {
+    joie: "😊",
+    tristesse: "😭",
+    amour: "❤️",
+    nostalgie: "🌙",
+    anxiété: "🚩",
+    peur: "😨"
+  };
+  return icons[emotion?.toLowerCase()] || "⭐";
+}
+</script>
 
 <style scoped>
 .home-page {
@@ -252,10 +381,21 @@
   color: #dde3ff;
   font-size: 14px;
   cursor: pointer;
+  transition: all 0.2s ease;
 }
 
 .favorite-btn:hover {
   background: rgba(14, 22, 48, 0.95);
+}
+
+.favorite-btn--active {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: rgba(239, 68, 68, 0.5);
+  color: #fecaca;
+}
+
+.favorite-btn--active:hover {
+  background: rgba(239, 68, 68, 0.3);
 }
 
 .heart {
