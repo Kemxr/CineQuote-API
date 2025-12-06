@@ -71,3 +71,12 @@ export const getQuoteById = async (req, res) => {
     const quote = await Quote.findById(req.params.id);
     res.json(quote);
 }
+
+export const getRandomQuote = async (req, res) => {
+  const count = await Quote.countDocuments();
+  if (count === 0) return res.status(404).json({ message: "Aucune citation disponible" });
+
+  const random = Math.floor(Math.random() * count);
+  const quote = await Quote.findOne().skip(random).populate("film");
+  res.json(quote);
+};

@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, onMounted, onUnmounted } from "vue";
 import { useRouter } from "vue-router";
 
 const router = useRouter();
@@ -7,32 +7,55 @@ const router = useRouter();
 const quote = ref(null);
 const isFav = ref(false);
 const loading = ref(true);
+let dailyRefreshTimeout = null;
+let dailyRefreshInterval = null;
 
-// Fetch daily quote
 async function fetchDailyQuote() {
   try {
     loading.value = true;
-    const response = await fetch("/api/quotes?limit=1");
-    
+    const response = await fetch("/api/quotes/random");
+
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}`);
     }
 
     const data = await response.json();
-    quote.value = data.items?.[0] || null;
-    
-    // Check if this quote is in favorites
+    quote.value = data || null;
+
+    const today = new Date().toISOString().split("T")[0];
+    localStorage.setItem("dailyQuote", JSON.stringify({ date: today, quote: data }));
+
+    console.log("Fetched random quote:", quote.value);
+
     if (quote.value) {
       await checkIfFavorite(quote.value._id);
     }
   } catch (e) {
-    console.error("Error fetching daily quote:", e);
+    console.error("Error fetching random quote:", e);
   } finally {
     loading.value = false;
   }
 }
 
-// Check if quote is favorited
+function loadDailyQuote() {
+  const storedQuote = localStorage.getItem("dailyQuote");
+  const today = new Date().toISOString().split("T")[0];
+
+  if (storedQuote) {
+    const { date, quote: storedQuoteData } = JSON.parse(storedQuote);
+
+    // If the stored quote is for today, use it
+    if (date === today) {
+      quote.value = storedQuoteData;
+      console.log("Loaded quote from localStorage:", quote.value);
+      return;
+    }
+  }
+
+  // If no quote is stored for today, fetch a new one
+  fetchDailyQuote();
+}
+
 async function checkIfFavorite(quoteId) {
   try {
     const response = await fetch("/api/favorites", {
@@ -59,9 +82,6 @@ async function toggleFavorite() {
 
   try {
     if (isFav.value) {
-      // Remove from favorites
-      // Calls DELETE /api/favorites endpoint which uses:
-      // - favoriteController.js: removeFavorite() function
       const response = await fetch("/api/favorites", {
         method: "DELETE",
         headers: {
@@ -75,9 +95,6 @@ async function toggleFavorite() {
         isFav.value = false;
       }
     } else {
-      // Add to favorites
-      // Calls POST /api/favorites endpoint which uses:
-      // - favoriteController.js: addFavorite() function
       const response = await fetch("/api/favorites", {
         method: "POST",
         headers: {
@@ -107,8 +124,39 @@ function goToProfile() {
   router.push("/profile");
 }
 
+// Schedule refresh at 9 AM daily
+function scheduleDailyRefresh() {
+  const now = new Date();
+  const next9AM = new Date();
+  next9AM.setHours(9, 0, 0, 0);
+
+  if (now > next9AM) {
+    next9AM.setDate(next9AM.getDate() + 1);
+  }
+
+  const timeUntilNext9AM = next9AM - now;
+
+  dailyRefreshTimeout = setTimeout(() => {
+    fetchDailyQuote();
+
+    dailyRefreshInterval = setInterval(fetchDailyQuote, 24 * 60 * 60 * 1000);
+  }, timeUntilNext9AM);
+
+  console.log(`Scheduled next refresh at: ${next9AM}`);
+}
+
 onMounted(() => {
-  fetchDailyQuote();
+  loadDailyQuote();
+  scheduleDailyRefresh();
+});
+
+onUnmounted(() => {
+  if (dailyRefreshTimeout) {
+    clearTimeout(dailyRefreshTimeout); 
+  }
+  if (dailyRefreshInterval) {
+    clearInterval(dailyRefreshInterval);
+  }
 });
 </script>
 

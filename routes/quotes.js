@@ -4,13 +4,15 @@ import {
     updateQuote,
     deleteQuote,
     getQuotes,
-    getQuoteById
+    getQuoteById,
+    getRandomQuote
 } from "../controllers/quoteController.js";
 import { protect, adminOnly } from "../middlewares/authMiddleware.js";
 
 const router = express.Router();
 
 router.get("/", getQuotes);
+router.get("/random", getRandomQuote);
 router.get("/:id", getQuoteById);
 router.post("/", protect, adminOnly, addQuote);
 router.patch("/:id", protect, adminOnly, updateQuote);
