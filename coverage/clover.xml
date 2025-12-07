@@ -1,0 +1,350 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<coverage generated="1765106913277" clover="3.2.0">
+  <project timestamp="1765106913277" name="All files">
+    <metrics statements="272" coveredstatements="226" conditionals="120" coveredconditionals="87" methods="39" coveredmethods="28" elements="431" coveredelements="341" complexity="0" loc="272" ncloc="272" packages="6" files="18" classes="18"/>
+    <package name="cine-quote-api">
+      <metrics statements="22" coveredstatements="17" conditionals="6" coveredconditionals="1" methods="2" coveredmethods="0"/>
+      <file name="app.js" path="C:\Users\Acer\OneDrive - HESSO\Bureau\ArchiOWeb\Projet-API\cine-quote-api\app.js">
+        <metrics statements="22" coveredstatements="17" conditionals="6" coveredconditionals="1" methods="2" coveredmethods="0"/>
+        <line num="17" count="4" type="stmt"/>
+        <line num="18" count="4" type="stmt"/>
+        <line num="20" count="4" type="stmt"/>
+        <line num="22" count="4" type="cond" truecount="1" falsecount="1"/>
+        <line num="24" count="4" type="stmt"/>
+        <line num="25" count="4" type="stmt"/>
+        <line num="28" count="4" type="stmt"/>
+        <line num="29" count="4" type="stmt"/>
+        <line num="30" count="4" type="stmt"/>
+        <line num="32" count="4" type="stmt"/>
+        <line num="33" count="4" type="stmt"/>
+        <line num="34" count="4" type="stmt"/>
+        <line num="35" count="4" type="stmt"/>
+        <line num="36" count="4" type="stmt"/>
+        <line num="37" count="4" type="stmt"/>
+        <line num="40" count="4" type="stmt"/>
+        <line num="41" count="0" type="stmt"/>
+        <line num="45" count="4" type="stmt"/>
+        <line num="47" count="0" type="stmt"/>
+        <line num="48" count="0" type="cond" truecount="0" falsecount="2"/>
+        <line num="51" count="0" type="cond" truecount="0" falsecount="2"/>
+        <line num="52" count="0" type="stmt"/>
+      </file>
+    </package>
+    <package name="cine-quote-api.controllers">
+      <metrics statements="167" coveredstatements="131" conditionals="94" coveredconditionals="70" methods="28" coveredmethods="20"/>
+      <file name="authController.js" path="C:\Users\Acer\OneDrive - HESSO\Bureau\ArchiOWeb\Projet-API\cine-quote-api\controllers\authController.js">
+        <metrics statements="42" coveredstatements="39" conditionals="32" coveredconditionals="28" methods="6" coveredmethods="6"/>
+        <line num="4" count="4" type="cond" truecount="2" falsecount="0"/>
+        <line num="7" count="4" type="stmt"/>
+        <line num="8" count="3" type="stmt"/>
+        <line num="15" count="4" type="stmt"/>
+        <line num="16" count="6" type="stmt"/>
+        <line num="19" count="6" type="cond" truecount="5" falsecount="0"/>
+        <line num="20" count="1" type="stmt"/>
+        <line num="22" count="5" type="cond" truecount="5" falsecount="0"/>
+        <line num="23" count="1" type="stmt"/>
+        <line num="25" count="4" type="cond" truecount="5" falsecount="0"/>
+        <line num="26" count="1" type="stmt"/>
+        <line num="29" count="3" type="stmt"/>
+        <line num="30" count="3" type="cond" truecount="2" falsecount="0"/>
+        <line num="32" count="2" type="stmt"/>
+        <line num="33" count="2" type="stmt"/>
+        <line num="43" count="4" type="stmt"/>
+        <line num="44" count="1" type="stmt"/>
+        <line num="45" count="1" type="stmt"/>
+        <line num="46" count="1" type="cond" truecount="1" falsecount="1"/>
+        <line num="47" count="0" type="stmt"/>
+        <line num="49" count="1" type="stmt"/>
+        <line num="57" count="0" type="stmt"/>
+        <line num="58" count="0" type="stmt"/>
+        <line num="62" count="4" type="stmt"/>
+        <line num="63" count="5" type="cond" truecount="1" falsecount="0"/>
+        <line num="64" count="5" type="stmt"/>
+        <line num="65" count="5" type="cond" truecount="2" falsecount="0"/>
+        <line num="67" count="4" type="stmt"/>
+        <line num="68" count="4" type="cond" truecount="2" falsecount="0"/>
+        <line num="70" count="3" type="stmt"/>
+        <line num="73" count="3" type="stmt"/>
+        <line num="75" count="3" type="stmt"/>
+        <line num="82" count="3" type="stmt"/>
+        <line num="92" count="4" type="stmt"/>
+        <line num="93" count="1" type="stmt"/>
+        <line num="98" count="1" type="stmt"/>
+        <line num="102" count="3" type="stmt"/>
+        <line num="103" count="3" type="cond" truecount="1" falsecount="1"/>
+        <line num="105" count="3" type="stmt"/>
+        <line num="106" count="3" type="stmt"/>
+        <line num="108" count="3" type="stmt"/>
+        <line num="115" count="3" type="cond" truecount="1" falsecount="1"/>
+      </file>
+      <file name="favoriteController.js" path="C:\Users\Acer\OneDrive - HESSO\Bureau\ArchiOWeb\Projet-API\cine-quote-api\controllers\favoriteController.js">
+        <metrics statements="21" coveredstatements="3" conditionals="4" coveredconditionals="0" methods="4" coveredmethods="0"/>
+        <line num="5" count="4" type="stmt"/>
+        <line num="6" count="0" type="stmt"/>
+        <line num="7" count="0" type="stmt"/>
+        <line num="9" count="0" type="stmt"/>
+        <line num="10" count="0" type="cond" truecount="0" falsecount="2"/>
+        <line num="12" count="0" type="stmt"/>
+        <line num="13" count="0" type="cond" truecount="0" falsecount="2"/>
+        <line num="14" count="0" type="stmt"/>
+        <line num="16" count="0" type="stmt"/>
+        <line num="17" count="0" type="stmt"/>
+        <line num="18" count="0" type="stmt"/>
+        <line num="22" count="4" type="stmt"/>
+        <line num="23" count="0" type="stmt"/>
+        <line num="24" count="0" type="stmt"/>
+        <line num="26" count="0" type="stmt"/>
+        <line num="27" count="0" type="stmt"/>
+        <line num="28" count="0" type="stmt"/>
+        <line num="29" count="0" type="stmt"/>
+        <line num="33" count="4" type="stmt"/>
+        <line num="34" count="0" type="stmt"/>
+        <line num="38" count="0" type="stmt"/>
+      </file>
+      <file name="filmController.js" path="C:\Users\Acer\OneDrive - HESSO\Bureau\ArchiOWeb\Projet-API\cine-quote-api\controllers\filmController.js">
+        <metrics statements="45" coveredstatements="36" conditionals="28" coveredconditionals="18" methods="7" coveredmethods="5"/>
+        <line num="5" count="4" type="stmt"/>
+        <line num="6" count="2" type="stmt"/>
+        <line num="8" count="2" type="cond" truecount="6" falsecount="0"/>
+        <line num="9" count="1" type="stmt"/>
+        <line num="12" count="1" type="stmt"/>
+        <line num="20" count="1" type="stmt"/>
+        <line num="21" count="1" type="stmt"/>
+        <line num="24" count="4" type="stmt"/>
+        <line num="25" count="3" type="stmt"/>
+        <line num="27" count="3" type="cond" truecount="2" falsecount="0"/>
+        <line num="28" count="1" type="stmt"/>
+        <line num="31" count="2" type="stmt"/>
+        <line num="32" count="2" type="cond" truecount="2" falsecount="0"/>
+        <line num="34" count="1" type="stmt"/>
+        <line num="36" count="1" type="cond" truecount="1" falsecount="1"/>
+        <line num="37" count="1" type="cond" truecount="1" falsecount="1"/>
+        <line num="38" count="1" type="cond" truecount="1" falsecount="1"/>
+        <line num="39" count="1" type="cond" truecount="1" falsecount="1"/>
+        <line num="40" count="1" type="cond" truecount="1" falsecount="1"/>
+        <line num="42" count="1" type="stmt"/>
+        <line num="43" count="1" type="stmt"/>
+        <line num="46" count="4" type="stmt"/>
+        <line num="47" count="2" type="stmt"/>
+        <line num="49" count="2" type="cond" truecount="1" falsecount="1"/>
+        <line num="50" count="0" type="stmt"/>
+        <line num="53" count="2" type="stmt"/>
+        <line num="54" count="2" type="cond" truecount="2" falsecount="0"/>
+        <line num="56" count="1" type="stmt"/>
+        <line num="57" count="1" type="stmt"/>
+        <line num="60" count="4" type="stmt"/>
+        <line num="61" count="2" type="stmt"/>
+        <line num="62" count="2" type="stmt"/>
+        <line num="65" count="4" type="stmt"/>
+        <line num="66" count="1" type="stmt"/>
+        <line num="67" count="1" type="stmt"/>
+        <line num="70" count="4" type="stmt"/>
+        <line num="71" count="0" type="stmt"/>
+        <line num="72" count="0" type="cond" truecount="0" falsecount="2"/>
+        <line num="73" count="0" type="stmt"/>
+        <line num="74" count="0" type="stmt"/>
+        <line num="78" count="4" type="stmt"/>
+        <line num="79" count="0" type="cond" truecount="0" falsecount="2"/>
+        <line num="80" count="0" type="stmt"/>
+        <line num="94" count="0" type="stmt"/>
+        <line num="95" count="0" type="stmt"/>
+      </file>
+      <file name="quoteController.js" path="C:\Users\Acer\OneDrive - HESSO\Bureau\ArchiOWeb\Projet-API\cine-quote-api\controllers\quoteController.js">
+        <metrics statements="38" coveredstatements="35" conditionals="24" coveredconditionals="19" methods="6" coveredmethods="5"/>
+        <line num="4" count="4" type="stmt"/>
+        <line num="5" count="1" type="stmt"/>
+        <line num="10" count="1" type="stmt"/>
+        <line num="11" count="1" type="stmt"/>
+        <line num="14" count="4" type="stmt"/>
+        <line num="15" count="1" type="stmt"/>
+        <line num="16" count="1" type="cond" truecount="1" falsecount="1"/>
+        <line num="17" count="1" type="stmt"/>
+        <line num="20" count="1" type="cond" truecount="1" falsecount="1"/>
+        <line num="21" count="1" type="stmt"/>
+        <line num="24" count="1" type="cond" truecount="1" falsecount="1"/>
+        <line num="25" count="0" type="stmt"/>
+        <line num="28" count="1" type="stmt"/>
+        <line num="29" count="1" type="stmt"/>
+        <line num="32" count="4" type="stmt"/>
+        <line num="33" count="1" type="stmt"/>
+        <line num="34" count="1" type="stmt"/>
+        <line num="37" count="4" type="stmt"/>
+        <line num="39" count="4" type="cond" truecount="2" falsecount="0"/>
+        <line num="40" count="4" type="stmt"/>
+        <line num="41" count="4" type="cond" truecount="4" falsecount="0"/>
+        <line num="42" count="3" type="stmt"/>
+        <line num="44" count="4" type="cond" truecount="2" falsecount="0"/>
+        <line num="47" count="4" type="stmt"/>
+        <line num="48" count="4" type="cond" truecount="2" falsecount="0"/>
+        <line num="49" count="4" type="cond" truecount="1" falsecount="1"/>
+        <line num="50" count="4" type="cond" truecount="1" falsecount="1"/>
+        <line num="53" count="4" type="stmt"/>
+        <line num="61" count="4" type="stmt"/>
+        <line num="70" count="4" type="stmt"/>
+        <line num="71" count="0" type="stmt"/>
+        <line num="72" count="0" type="stmt"/>
+        <line num="75" count="4" type="stmt"/>
+        <line num="76" count="2" type="stmt"/>
+        <line num="77" count="2" type="cond" truecount="2" falsecount="0"/>
+        <line num="79" count="1" type="stmt"/>
+        <line num="80" count="1" type="stmt"/>
+        <line num="81" count="1" type="stmt"/>
+      </file>
+      <file name="userController.js" path="C:\Users\Acer\OneDrive - HESSO\Bureau\ArchiOWeb\Projet-API\cine-quote-api\controllers\userController.js">
+        <metrics statements="21" coveredstatements="18" conditionals="6" coveredconditionals="5" methods="5" coveredmethods="4"/>
+        <line num="4" count="4" type="stmt"/>
+        <line num="5" count="2" type="stmt"/>
+        <line num="10" count="2" type="stmt"/>
+        <line num="14" count="4" type="stmt"/>
+        <line num="15" count="1" type="stmt"/>
+        <line num="20" count="1" type="cond" truecount="1" falsecount="1"/>
+        <line num="21" count="1" type="stmt"/>
+        <line num="25" count="4" type="stmt"/>
+        <line num="26" count="0" type="stmt"/>
+        <line num="32" count="0" type="stmt"/>
+        <line num="33" count="0" type="stmt"/>
+        <line num="37" count="4" type="stmt"/>
+        <line num="38" count="3" type="cond" truecount="2" falsecount="0"/>
+        <line num="39" count="2" type="stmt"/>
+        <line num="41" count="3" type="cond" truecount="2" falsecount="0"/>
+        <line num="42" count="2" type="stmt"/>
+        <line num="45" count="3" type="stmt"/>
+        <line num="46" count="3" type="stmt"/>
+        <line num="50" count="4" type="stmt"/>
+        <line num="51" count="1" type="stmt"/>
+        <line num="52" count="1" type="stmt"/>
+      </file>
+    </package>
+    <package name="cine-quote-api.middlewares">
+      <metrics statements="21" coveredstatements="18" conditionals="12" coveredconditionals="11" methods="3" coveredmethods="3"/>
+      <file name="authMiddleware.js" path="C:\Users\Acer\OneDrive - HESSO\Bureau\ArchiOWeb\Projet-API\cine-quote-api\middlewares\authMiddleware.js">
+        <metrics statements="13" coveredstatements="11" conditionals="10" coveredconditionals="9" methods="2" coveredmethods="2"/>
+        <line num="5" count="4" type="stmt"/>
+        <line num="9" count="8" type="cond" truecount="4" falsecount="0"/>
+        <line num="10" count="4" type="stmt"/>
+        <line num="13" count="8" type="cond" truecount="2" falsecount="0"/>
+        <line num="15" count="4" type="stmt"/>
+        <line num="16" count="4" type="stmt"/>
+        <line num="17" count="4" type="stmt"/>
+        <line num="18" count="4" type="stmt"/>
+        <line num="20" count="0" type="stmt"/>
+        <line num="25" count="4" type="stmt"/>
+        <line num="26" count="3" type="cond" truecount="3" falsecount="1"/>
+        <line num="27" count="3" type="stmt"/>
+        <line num="29" count="0" type="stmt"/>
+      </file>
+      <file name="userMiddleware.js" path="C:\Users\Acer\OneDrive - HESSO\Bureau\ArchiOWeb\Projet-API\cine-quote-api\middlewares\userMiddleware.js">
+        <metrics statements="8" coveredstatements="7" conditionals="2" coveredconditionals="2" methods="1" coveredmethods="1"/>
+        <line num="4" count="4" type="stmt"/>
+        <line num="6" count="8" type="stmt"/>
+        <line num="7" count="8" type="stmt"/>
+        <line num="8" count="8" type="cond" truecount="2" falsecount="0"/>
+        <line num="9" count="3" type="stmt"/>
+        <line num="12" count="0" type="stmt"/>
+        <line num="14" count="5" type="stmt"/>
+        <line num="15" count="5" type="stmt"/>
+      </file>
+    </package>
+    <package name="cine-quote-api.models">
+      <metrics statements="15" coveredstatements="14" conditionals="2" coveredconditionals="2" methods="2" coveredmethods="2"/>
+      <file name="film.js" path="C:\Users\Acer\OneDrive - HESSO\Bureau\ArchiOWeb\Projet-API\cine-quote-api\models\film.js">
+        <metrics statements="2" coveredstatements="2" conditionals="0" coveredconditionals="0" methods="0" coveredmethods="0"/>
+        <line num="3" count="4" type="stmt"/>
+        <line num="25" count="4" type="stmt"/>
+      </file>
+      <file name="quote.js" path="C:\Users\Acer\OneDrive - HESSO\Bureau\ArchiOWeb\Projet-API\cine-quote-api\models\quote.js">
+        <metrics statements="2" coveredstatements="2" conditionals="0" coveredconditionals="0" methods="0" coveredmethods="0"/>
+        <line num="3" count="4" type="stmt"/>
+        <line num="19" count="4" type="stmt"/>
+      </file>
+      <file name="user.js" path="C:\Users\Acer\OneDrive - HESSO\Bureau\ArchiOWeb\Projet-API\cine-quote-api\models\user.js">
+        <metrics statements="11" coveredstatements="10" conditionals="2" coveredconditionals="2" methods="2" coveredmethods="2"/>
+        <line num="4" count="4" type="stmt"/>
+        <line num="38" count="4" type="stmt"/>
+        <line num="39" count="29" type="cond" truecount="2" falsecount="0"/>
+        <line num="40" count="26" type="stmt"/>
+        <line num="41" count="26" type="stmt"/>
+        <line num="42" count="26" type="stmt"/>
+        <line num="43" count="26" type="stmt"/>
+        <line num="45" count="0" type="stmt"/>
+        <line num="50" count="4" type="stmt"/>
+        <line num="51" count="4" type="stmt"/>
+        <line num="54" count="4" type="stmt"/>
+      </file>
+    </package>
+    <package name="cine-quote-api.routes">
+      <metrics statements="32" coveredstatements="31" conditionals="0" coveredconditionals="0" methods="1" coveredmethods="0"/>
+      <file name="auth.js" path="C:\Users\Acer\OneDrive - HESSO\Bureau\ArchiOWeb\Projet-API\cine-quote-api\routes\auth.js">
+        <metrics statements="5" coveredstatements="5" conditionals="0" coveredconditionals="0" methods="0" coveredmethods="0"/>
+        <line num="5" count="4" type="stmt"/>
+        <line num="7" count="4" type="stmt"/>
+        <line num="8" count="4" type="stmt"/>
+        <line num="9" count="4" type="stmt"/>
+        <line num="10" count="4" type="stmt"/>
+      </file>
+      <file name="favorites.js" path="C:\Users\Acer\OneDrive - HESSO\Bureau\ArchiOWeb\Projet-API\cine-quote-api\routes\favorites.js">
+        <metrics statements="4" coveredstatements="4" conditionals="0" coveredconditionals="0" methods="0" coveredmethods="0"/>
+        <line num="5" count="4" type="stmt"/>
+        <line num="7" count="4" type="stmt"/>
+        <line num="8" count="4" type="stmt"/>
+        <line num="9" count="4" type="stmt"/>
+      </file>
+      <file name="films.js" path="C:\Users\Acer\OneDrive - HESSO\Bureau\ArchiOWeb\Projet-API\cine-quote-api\routes\films.js">
+        <metrics statements="8" coveredstatements="8" conditionals="0" coveredconditionals="0" methods="0" coveredmethods="0"/>
+        <line num="11" count="4" type="stmt"/>
+        <line num="13" count="4" type="stmt"/>
+        <line num="14" count="4" type="stmt"/>
+        <line num="15" count="4" type="stmt"/>
+        <line num="16" count="4" type="stmt"/>
+        <line num="17" count="4" type="stmt"/>
+        <line num="18" count="4" type="stmt"/>
+        <line num="19" count="4" type="stmt"/>
+      </file>
+      <file name="index.js" path="C:\Users\Acer\OneDrive - HESSO\Bureau\ArchiOWeb\Projet-API\cine-quote-api\routes\index.js">
+        <metrics statements="3" coveredstatements="2" conditionals="0" coveredconditionals="0" methods="1" coveredmethods="0"/>
+        <line num="3" count="4" type="stmt"/>
+        <line num="5" count="4" type="stmt"/>
+        <line num="6" count="0" type="stmt"/>
+      </file>
+      <file name="quotes.js" path="C:\Users\Acer\OneDrive - HESSO\Bureau\ArchiOWeb\Projet-API\cine-quote-api\routes\quotes.js">
+        <metrics statements="7" coveredstatements="7" conditionals="0" coveredconditionals="0" methods="0" coveredmethods="0"/>
+        <line num="12" count="4" type="stmt"/>
+        <line num="14" count="4" type="stmt"/>
+        <line num="15" count="4" type="stmt"/>
+        <line num="16" count="4" type="stmt"/>
+        <line num="17" count="4" type="stmt"/>
+        <line num="18" count="4" type="stmt"/>
+        <line num="19" count="4" type="stmt"/>
+      </file>
+      <file name="users.js" path="C:\Users\Acer\OneDrive - HESSO\Bureau\ArchiOWeb\Projet-API\cine-quote-api\routes\users.js">
+        <metrics statements="5" coveredstatements="5" conditionals="0" coveredconditionals="0" methods="0" coveredmethods="0"/>
+        <line num="12" count="4" type="stmt"/>
+        <line num="15" count="4" type="stmt"/>
+        <line num="18" count="4" type="stmt"/>
+        <line num="21" count="4" type="stmt"/>
+        <line num="24" count="4" type="stmt"/>
+      </file>
+    </package>
+    <package name="cine-quote-api.spec">
+      <metrics statements="15" coveredstatements="15" conditionals="6" coveredconditionals="3" methods="3" coveredmethods="3"/>
+      <file name="setup.js" path="C:\Users\Acer\OneDrive - HESSO\Bureau\ArchiOWeb\Projet-API\cine-quote-api\spec\setup.js">
+        <metrics statements="15" coveredstatements="15" conditionals="6" coveredconditionals="3" methods="3" coveredmethods="3"/>
+        <line num="7" count="4" type="stmt"/>
+        <line num="9" count="4" type="stmt"/>
+        <line num="10" count="4" type="stmt"/>
+        <line num="13" count="4" type="cond" truecount="1" falsecount="1"/>
+        <line num="14" count="4" type="stmt"/>
+        <line num="18" count="4" type="stmt"/>
+        <line num="22" count="4" type="stmt"/>
+        <line num="23" count="4" type="cond" truecount="1" falsecount="1"/>
+        <line num="24" count="4" type="stmt"/>
+        <line num="26" count="4" type="cond" truecount="1" falsecount="1"/>
+        <line num="27" count="4" type="stmt"/>
+        <line num="32" count="4" type="stmt"/>
+        <line num="33" count="44" type="stmt"/>
+        <line num="34" count="44" type="stmt"/>
+        <line num="35" count="132" type="stmt"/>
+      </file>
+    </package>
+  </project>
+</coverage>

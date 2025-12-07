@@ -8,7 +8,8 @@
     "dev:server": "nodemon --env-file=.env",
     "dev:client": "cd ./frontend/cine-quote-frontend && npm run dev",
     "start": "node ./bin/start",
-    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
+    "test": "cross-env NODE_ENV=test NODE_OPTIONS=--experimental-vm-modules jest --detectOpenHandles --forceExit",
+    "test:coverage": "cross-env NODE_ENV=test NODE_OPTIONS=--experimental-vm-modules jest --coverage",
     "seed": "node ./seed.js",
     "clear": "node ./clear.js"
   },
@@ -24,9 +25,12 @@
     "morgan": "^1.10.1"
   },
   "devDependencies": {
+    "@jest/globals": "^30.2.0",
     "concurrently": "^9.2.1",
+    "cross-env": "^10.1.0",
     "dotenv": "^17.2.3",
     "jest": "^30.2.0",
+    "mongodb-memory-server": "^10.4.1",
     "nodemon": "^3.1.10",
     "supertest": "^7.1.4"
   }

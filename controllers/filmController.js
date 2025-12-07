@@ -2,7 +2,60 @@ import Film from "../models/film.js"
 import Quote from "../models/quote.js"
 import mongoose from "mongoose";
 
-//L'ajout et la suppression de film se fera avec le seeder
+export const createFilm = async (req, res) => {
+  const { title, year, director, genre, image } = req.body;
+
+  if (!title || !year || !director || !genre) {
+    return res.status(400).json({ message: "Tous les champs requis doivent être remplis" });
+  }
+
+  const film = new Film({
+    title,
+    year,
+    director,
+    genre,
+    image,
+  });
+
+  await film.save();
+  res.status(201).json(film);
+};
+
+export const updateFilm = async (req, res) => {
+  const { id } = req.params;
+
+  if (!mongoose.isValidObjectId(id)) {
+    return res.status(400).json({ message: "ID film invalide" });
+  }
+
+  const film = await Film.findById(id);
+  if (!film) return res.status(404).json({ message: "Film non trouvé" });
+
+  const { title, year, director, genre, image } = req.body;
+
+  if (title != null) film.title = title;
+  if (year != null) film.year = year;
+  if (director != null) film.director = director;
+  if (genre != null) film.genre = genre;
+  if (image != null) film.image = image;
+
+  await film.save();
+  res.json(film);
+};
+
+export const deleteFilm = async (req, res) => {
+  const { id } = req.params;
+
+  if (!mongoose.isValidObjectId(id)) {
+    return res.status(400).json({ message: "ID film invalide" });
+  }
+
+  const film = await Film.findById(id);
+  if (!film) return res.status(404).json({ message: "Film non trouvé" });
+
+  await film.deleteOne();
+  res.json({ message: "Film supprimé avec succès" });
+};
 
 export const getFilms = async (req, res) => {
     const films = await Film.find();
