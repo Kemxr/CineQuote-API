@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<coverage generated="1765106913277" clover="3.2.0">
-  <project timestamp="1765106913277" name="All files">
+<coverage generated="1765179375016" clover="3.2.0">
+  <project timestamp="1765179375016" name="All files">
     <metrics statements="272" coveredstatements="226" conditionals="120" coveredconditionals="87" methods="39" coveredmethods="28" elements="431" coveredelements="341" complexity="0" loc="272" ncloc="272" packages="6" files="18" classes="18"/>
     <package name="cine-quote-api">
       <metrics statements="22" coveredstatements="17" conditionals="6" coveredconditionals="1" methods="2" coveredmethods="0"/>
