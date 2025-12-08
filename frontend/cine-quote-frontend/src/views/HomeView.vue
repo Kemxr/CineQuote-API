@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, onUnmounted } from "vue";
+import { ref, onMounted, onUnmounted, computed } from "vue";
 import { useRouter } from "vue-router";
 
 const router = useRouter();
@@ -9,6 +9,14 @@ const isFav = ref(false);
 const loading = ref(true);
 let dailyRefreshTimeout = null;
 let dailyRefreshInterval = null;
+
+const backgroundStyle = computed(() => {
+  const image = quote.value?.film?.image;
+  if (!image) return {};
+  return {
+    "--quote-bg-image": `url(${image})`,
+  };
+});
 
 async function fetchDailyQuote() {
   try {
@@ -48,6 +56,9 @@ function loadDailyQuote() {
     if (date === today) {
       quote.value = storedQuoteData;
       console.log("Loaded quote from localStorage:", quote.value);
+      if (quote.value) {
+        checkIfFavorite(quote.value._id);
+      }
       return;
     }
   }
@@ -173,7 +184,7 @@ onUnmounted(() => {
     </header>
 
     <main class="content">
-      <section class="quote-card" v-if="quote">
+      <section class="quote-card" v-if="quote" :style="backgroundStyle">
         <!-- Badge heure en haut à gauche -->
         <div class="badge badge-time">
           <span class="badge-icon">⏱</span>
@@ -321,7 +332,7 @@ function getEmotionIcon(emotion) {
   content: "";
   position: absolute;
   inset: 0;
-  background-image: url("https://images.pexels.com/photos/6898859/pexels-photo-6898859.jpeg?auto=compress&cs=tinysrgb&w=1600");
+  background-image: var(--quote-bg-image);
   background-size: cover;
   background-position: center right;
   opacity: 0.45;
