@@ -212,7 +212,7 @@ const films = await Film.insertMany([
     year: 1953,
     director: "Clyde Geronimi, Wilfred Jackson, Hamilton Luske",
     genre: "Animation / Fantaisie",
-    image: "https://image.tmdb.org/t/p/original/lsXA11gQZbRfpYf6AXZzj3nEsY.jpg",
+    image: "https://image.tmdb.org/t/p/w600_and_h900_face/lsNXA11gQZbRfpYf6AXZzj3nEsY.jpg",
   },
 ]);
 

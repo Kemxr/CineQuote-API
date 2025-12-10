@@ -4,8 +4,8 @@ import { addFavorite, removeFavorite, getFavorites } from "../controllers/favori
 
 const router = express.Router();
 
-router.get("/", protect, getFavorites);
 router.post("/", protect, addFavorite);
+router.get("/", protect, getFavorites);
 router.delete("/", protect, removeFavorite);
 
 export default router;

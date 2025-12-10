@@ -6,7 +6,8 @@ import { getFilms,
         createFilm,
         updateFilm,
         deleteFilm
-    } from "../controllers/filmController.js"
+} from "../controllers/filmController.js"
+import { adminOnly } from "../middlewares/authMiddleware.js";
 
 const router = express.Router();
 
@@ -14,8 +15,8 @@ router.get("/", getFilms);
 router.get("/top", getTopFilms);
 router.get("/:id", getFilmById);
 router.get("/:id/quoteCount", getQuoteCount);
-router.post("/", createFilm);
-router.put("/:id", updateFilm);
-router.delete("/:id", deleteFilm);
+router.post("/", adminOnly, createFilm);
+router.put("/:id", adminOnly, updateFilm);
+router.delete("/:id", adminOnly, deleteFilm);
 
 export default router;
