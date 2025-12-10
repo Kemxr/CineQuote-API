@@ -1,3 +1,78 @@
+<script setup>
+import { ref } from 'vue'
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
+const name = ref('')
+const email = ref('')
+const password = ref('')
+const confirmPassword = ref('')
+const error = ref('')
+const success = ref('')
+const isSubmitting = ref(false)
+
+const handleRegister = async () => {
+  error.value = ''
+  success.value = ''
+
+  if (!name.value || !email.value || !password.value || !confirmPassword.value) {
+    error.value = 'Veuillez remplir tous les champs'
+    return
+  }
+  if (password.value !== confirmPassword.value) {
+    error.value = 'Les mots de passe ne correspondent pas'
+    return
+  }
+  if (password.value.length < 6) {
+    error.value = 'Le mot de passe doit contenir au moins 6 caractères'
+    return
+  }
+
+  isSubmitting.value = true
+
+  try {
+    const response = await fetch('/api/auth/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: name.value,
+        email: email.value,
+        password: password.value
+      }),
+      credentials: 'include'
+    })
+
+    const data = await response.json()
+    if (!response.ok) {
+      error.value = data.message || 'Erreur lors de l\'inscription'
+      return
+    }
+
+    success.value = 'Compte créé avec succès ! Connexion automatique...'
+    
+    const loginResponse = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: email.value,
+        password: password.value
+      }),
+      credentials: 'include'
+    })
+    
+    if (loginResponse.ok) {
+      router.push('/')
+    } else {
+      setTimeout(() => router.push('/login'), 1500)
+    }
+  } catch (err) {
+    error.value = 'Erreur de connexion au serveur'
+  } finally {
+    isSubmitting.value = false
+  }
+}
+</script>
+
 <template>
   <div class="register-container">
     <div class="register-card">
@@ -67,83 +142,6 @@
     </div>
   </div>
 </template>
-
-<script setup>
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
-
-const router = useRouter()
-const name = ref('')
-const email = ref('')
-const password = ref('')
-const confirmPassword = ref('')
-const error = ref('')
-const success = ref('')
-const isSubmitting = ref(false)
-
-const handleRegister = async () => {
-  error.value = ''
-  success.value = ''
-
-  if (!name.value || !email.value || !password.value || !confirmPassword.value) {
-    error.value = 'Veuillez remplir tous les champs'
-    return
-  }
-  if (password.value !== confirmPassword.value) {
-    error.value = 'Les mots de passe ne correspondent pas'
-    return
-  }
-  if (password.value.length < 6) {
-    error.value = 'Le mot de passe doit contenir au moins 6 caractères'
-    return
-  }
-
-  isSubmitting.value = true
-
-  try {
-    const response = await fetch('/api/auth/register', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        name: name.value,
-        email: email.value,
-        password: password.value
-      }),
-      credentials: 'include'
-    })
-
-    const data = await response.json()
-    if (!response.ok) {
-      error.value = data.message || 'Erreur lors de l\'inscription'
-      return
-    }
-
-    success.value = 'Compte créé avec succès ! Connexion automatique...'
-    
-    // Automatically log in the user
-    const loginResponse = await fetch('/api/auth/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        email: email.value,
-        password: password.value
-      }),
-      credentials: 'include'
-    })
-    
-    if (loginResponse.ok) {
-      router.push('/')
-    } else {
-      // If auto-login fails, redirect to login page
-      setTimeout(() => router.push('/login'), 1500)
-    }
-  } catch (err) {
-    error.value = 'Erreur de connexion au serveur'
-  } finally {
-    isSubmitting.value = false
-  }
-}
-</script>
 
 <style scoped>
 * {

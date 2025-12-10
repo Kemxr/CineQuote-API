@@ -1,8 +1,10 @@
 <script setup>
 import { ref, onMounted, onUnmounted, computed } from "vue";
 import { useRouter } from "vue-router";
+import { useEmotions } from "@/composables/useEmotions";
 
 const router = useRouter();
+const { getEmotionIcon } = useEmotions();
 
 const quote = ref(null);
 const isFav = ref(false);
@@ -35,8 +37,6 @@ async function fetchDailyQuote() {
     const today = new Date().toISOString().split("T")[0];
     localStorage.setItem("dailyQuote", JSON.stringify({ date: today, quote: data }));
 
-    console.log("Fetched random quote:", quote.value);
-
     if (quote.value) {
       await checkIfFavorite(quote.value._id);
     }
@@ -54,10 +54,8 @@ function loadDailyQuote() {
   if (storedQuote) {
     const { date, quote: storedQuoteData } = JSON.parse(storedQuote);
 
-    // If the stored quote is for today, use it
     if (date === today) {
       quote.value = storedQuoteData;
-      console.log("Loaded quote from localStorage:", quote.value);
       if (quote.value) {
         checkIfFavorite(quote.value._id);
       }
@@ -65,7 +63,6 @@ function loadDailyQuote() {
     }
   }
 
-  // If no quote is stored for today, fetch a new one
   fetchDailyQuote();
 }
 
@@ -89,7 +86,6 @@ async function checkIfFavorite(quoteId) {
   }
 }
 
-// Toggle favorite
 async function toggleFavorite() {
   if (!quote.value) return;
 
@@ -132,12 +128,10 @@ async function toggleFavorite() {
   }
 }
 
-// Navigate to profile
 function goToProfile() {
   router.push("/profile");
 }
 
-// Schedule refresh at 9 AM daily
 function scheduleDailyRefresh() {
   const now = new Date();
   const next9AM = new Date();
@@ -151,18 +145,14 @@ function scheduleDailyRefresh() {
 
   dailyRefreshTimeout = setTimeout(() => {
     fetchDailyQuote();
-
     dailyRefreshInterval = setInterval(fetchDailyQuote, 24 * 60 * 60 * 1000);
   }, timeUntilNext9AM);
-
-  console.log(`Scheduled next refresh at: ${next9AM}`);
 }
 
 onMounted(() => {
   loadDailyQuote();
   scheduleDailyRefresh();
   
-  // Update time every second
   timeInterval = setInterval(() => {
     currentTime.value = new Date().toLocaleTimeString('fr-FR');
   }, 1000);
@@ -179,7 +169,6 @@ onUnmounted(() => {
     clearInterval(timeInterval);
   }
 });
-
 </script>
 
 <template>
@@ -245,20 +234,6 @@ onUnmounted(() => {
     </main>
   </div>
 </template>
-
-<script>
-function getEmotionIcon(emotion) {
-  const icons = {
-    joie: "😊",
-    tristesse: "😭",
-    amour: "❤️",
-    nostalgie: "🌙",
-    anxiété: "🚩",
-    peur: "😨"
-  };
-  return icons[emotion?.toLowerCase()] || "⭐";
-}
-</script>
 
 <style scoped>
 .home-page {

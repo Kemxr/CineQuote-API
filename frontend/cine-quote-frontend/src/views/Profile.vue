@@ -107,123 +107,105 @@
   </div>
 </template>
 
-<script>
+<script setup>
 import { ref, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { authAPI } from '@/services/api';
 
-export default {
-  name: 'ProfileView',
-  setup() {
-    const router = useRouter();
-    const user = ref(null);
-    const loading = ref(true);
-    const stats = ref({
-      favorites: 0,
-      moviesWatched: 0,
-      quotes: 0
-    });
+const router = useRouter();
+const user = ref(null);
+const loading = ref(true);
+const stats = ref({
+  favorites: 0,
+  moviesWatched: 0,
+  quotes: 0
+});
 
-    const badges = ref([
-      {
-        id: 1,
-        name: 'Cinéphile',
-        icon: '🎬',
-        description: 'Regardez 10 films',
-        unlockedAt: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString()
-      },
-      {
-        id: 2,
-        name: 'Collectionneur',
-        icon: '❤️',
-        description: 'Ajoutez 5 favoris',
-        unlockedAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString()
-      },
-      {
-        id: 3,
-        name: 'Maître du Quiz',
-        icon: '🏆',
-        description: 'Complétez 3 quiz',
-        unlockedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString()
-      }
-    ]);
-
-    const fetchUserProfile = async () => {
-      try {
-        loading.value = true;
-        const response = await authAPI.getProfile();
-        user.value = response.data;
-        
-        // Fetch real favorites count from API
-        await fetchFavoritesCount();
-        
-        // TODO: Fetch real stats for moviesWatched and quotes when endpoints are available
-        stats.value.moviesWatched = 45;
-        stats.value.quotes = 158;
-      } catch (err) {
-        console.error('Error fetching profile:', err);
-        user.value = null;
-      } finally {
-        loading.value = false;
-      }
-    };
-
-    const fetchFavoritesCount = async () => {
-      try {
-        const response = await fetch('/api/favorites', {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
-          }
-        });
-        if (response.ok) {
-          const data = await response.json();
-          stats.value.favorites = data.length || 0;
-        } else {
-          stats.value.favorites = 0;
-        }
-      } catch (err) {
-        console.error('Error fetching favorites count:', err);
-        stats.value.favorites = 0;
-      }
-    };
-
-    const handleLogout = async () => {
-      try {
-        await authAPI.logout();
-        user.value = null;
-        router.push('/login');
-      } catch (err) {
-        console.error('Logout error:', err);
-      }
-    };
-
-    const formatDate = (dateString) => {
-      if (!dateString) return '';
-      const options = { year: 'numeric', month: 'long', day: 'numeric' };
-      return new Date(dateString).toLocaleDateString('fr-FR', options);
-    };
-
-    onMounted(() => {
-      fetchUserProfile();
-      
-      // Listen for favorite changes from other components
-      window.addEventListener('favoriteUpdated', fetchFavoritesCount);
-    });
-
-    onUnmounted(() => {
-      window.removeEventListener('favoriteUpdated', fetchFavoritesCount);
-    });
-
-    return {
-      user,
-      loading,
-      stats,
-      badges,
-      handleLogout,
-      formatDate
-    };
+const badges = ref([
+  {
+    id: 1,
+    name: 'Cinéphile',
+    icon: '🎬',
+    description: 'Regardez 10 films',
+    unlockedAt: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString()
+  },
+  {
+    id: 2,
+    name: 'Collectionneur',
+    icon: '❤️',
+    description: 'Ajoutez 5 favoris',
+    unlockedAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString()
+  },
+  {
+    id: 3,
+    name: 'Maître du Quiz',
+    icon: '🏆',
+    description: 'Complétez 3 quiz',
+    unlockedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString()
   }
-};
+]);
+
+async function fetchUserProfile() {
+  try {
+    loading.value = true;
+    const response = await authAPI.getProfile();
+    user.value = response.data;
+    
+    await fetchFavoritesCount();
+    
+    stats.value.moviesWatched = 45;
+    stats.value.quotes = 158;
+  } catch (err) {
+    console.error('Error fetching profile:', err);
+    user.value = null;
+  } finally {
+    loading.value = false;
+  }
+}
+
+async function fetchFavoritesCount() {
+  try {
+    const response = await fetch('/api/favorites', {
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      }
+    });
+    if (response.ok) {
+      const data = await response.json();
+      stats.value.favorites = data.length || 0;
+    } else {
+      stats.value.favorites = 0;
+    }
+  } catch (err) {
+    console.error('Error fetching favorites count:', err);
+    stats.value.favorites = 0;
+  }
+}
+
+async function handleLogout() {
+  try {
+    await authAPI.logout();
+    user.value = null;
+    router.push('/login');
+  } catch (err) {
+    console.error('Logout error:', err);
+  }
+}
+
+function formatDate(dateString) {
+  if (!dateString) return '';
+  const options = { year: 'numeric', month: 'long', day: 'numeric' };
+  return new Date(dateString).toLocaleDateString('fr-FR', options);
+}
+
+onMounted(() => {
+  fetchUserProfile();
+  window.addEventListener('favoriteUpdated', fetchFavoritesCount);
+});
+
+onUnmounted(() => {
+  window.removeEventListener('favoriteUpdated', fetchFavoritesCount);
+});
 </script>
 
 <style scoped>
