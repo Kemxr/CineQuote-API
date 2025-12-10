@@ -7,8 +7,10 @@ const router = useRouter();
 const quote = ref(null);
 const isFav = ref(false);
 const loading = ref(true);
+const currentTime = ref(new Date().toLocaleTimeString('fr-FR'));
 let dailyRefreshTimeout = null;
 let dailyRefreshInterval = null;
+let timeInterval = null;
 
 const backgroundStyle = computed(() => {
   const image = quote.value?.film?.image;
@@ -159,6 +161,11 @@ function scheduleDailyRefresh() {
 onMounted(() => {
   loadDailyQuote();
   scheduleDailyRefresh();
+  
+  // Update time every second
+  timeInterval = setInterval(() => {
+    currentTime.value = new Date().toLocaleTimeString('fr-FR');
+  }, 1000);
 });
 
 onUnmounted(() => {
@@ -168,7 +175,11 @@ onUnmounted(() => {
   if (dailyRefreshInterval) {
     clearInterval(dailyRefreshInterval);
   }
+  if (timeInterval) {
+    clearInterval(timeInterval);
+  }
 });
+
 </script>
 
 <template>
@@ -188,7 +199,7 @@ onUnmounted(() => {
         <!-- Badge heure en haut à gauche -->
         <div class="badge badge-time">
           <span class="badge-icon">⏱</span>
-          <span>{{ new Date().toLocaleTimeString('fr-FR') }}</span>
+          <span>{{ currentTime }}</span>
         </div>
 
         <!-- Badge émotion en haut à droite -->

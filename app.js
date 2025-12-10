@@ -45,16 +45,9 @@ app.use(function (req, res, next) {
 
 // error handler
 app.use(function (err, req, res, next) {
-  res.locals.message = err.message;
-  res.locals.error = req.app.get("env") === "development" ? err : {};
-
   res.status(err.status || 500);
-  res.send(err.message);
+  res.send({ error: err.message });
 });
 
-// Start HTTP server and WebSocket server
-const port = process.env.VITE_WS_PORT || 8899;
-httpServer.listen(port, () => console.log(`HTTP server listening on port ${port}`));
-wsServer.start({ server: httpServer });
-
+export { httpServer, wsServer };
 export default app;

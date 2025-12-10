@@ -3,7 +3,7 @@
 import createDebugger from "debug";
 import http from "node:http";
 
-import app from "../app.js";
+import app, { httpServer, wsServer } from "../app.js";
 
 const debug = createDebugger('cine-quote-api:server')
 
@@ -11,13 +11,13 @@ const debug = createDebugger('cine-quote-api:server')
 const port = normalizePort(process.env.PORT || "3000");
 app.set("port", port);
 
-// Create HTTP server
-const httpServer = http.createServer(app);
-
 // Listen on provided port, on all network interfaces
 httpServer.listen(port);
 httpServer.on("error", onHttpServerError);
 httpServer.on("listening", onHttpServerListening);
+
+// Start WebSocket server
+wsServer.start({ server: httpServer });
 
 // Normalize a port into a number, string, or false
 function normalizePort(val) {

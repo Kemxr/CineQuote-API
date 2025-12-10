@@ -118,8 +118,25 @@ const handleRegister = async () => {
       return
     }
 
-    success.value = 'Compte créé avec succès ! Redirection...'
-    setTimeout(() => router.push('/login'), 1500)
+    success.value = 'Compte créé avec succès ! Connexion automatique...'
+    
+    // Automatically log in the user
+    const loginResponse = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: email.value,
+        password: password.value
+      }),
+      credentials: 'include'
+    })
+    
+    if (loginResponse.ok) {
+      router.push('/')
+    } else {
+      // If auto-login fails, redirect to login page
+      setTimeout(() => router.push('/login'), 1500)
+    }
   } catch (err) {
     error.value = 'Erreur de connexion au serveur'
   } finally {
