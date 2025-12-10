@@ -130,7 +130,7 @@ import { useEmotions } from "@/composables/useEmotions";
 
 const router = useRouter();
 const { favorites, fetchFavorites, isFavorite, toggleFavorite } = useFavorites();
-const { emotions, getEmotionIcon } = useEmotions();
+const { emotions, getEmotionIcon: getEmotionEmoji } = useEmotions();
 
 const search = ref("");
 const selectedEmotion = ref("tout");
@@ -218,6 +218,10 @@ onMounted(() => {
   display: flex;
   justify-content: flex-start;
   padding-top: 20px;
+  max-width: 960px;
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .back-button {
@@ -241,6 +245,10 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   gap: 16px;
+  max-width: 960px;
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .search-wrapper {

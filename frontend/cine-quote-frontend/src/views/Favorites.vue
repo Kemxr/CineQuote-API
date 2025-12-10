@@ -130,7 +130,7 @@ import { useRouter } from "vue-router";
 import { useEmotions } from "@/composables/useEmotions";
 
 const router = useRouter();
-const { getEmotionIcon } = useEmotions();
+const { getEmotionIcon: getEmotionEmoji } = useEmotions();
 
 const favorites = ref([]);
 const loading = ref(false);
@@ -217,6 +217,7 @@ onMounted(() => {
   background: #050b1a;
   color: #f5f7ff;
   font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  align-items: center;
 }
 
 .favorites-header {
@@ -224,6 +225,8 @@ onMounted(() => {
   display: flex;
   justify-content: flex-start;
   padding-top: 12px;
+  max-width: 960px;
+  width: 100%;
 }
 
 .back-button {
@@ -253,6 +256,7 @@ onMounted(() => {
   flex-direction: column;
   gap: 12px;
   width: 100%;
+  max-width: 960px;
 }
 
 /* Status Container */
