@@ -68,6 +68,12 @@
             </button>
           </div>
         </article>
+
+        <div class="explore-section">
+          <router-link to="/explore" class="explore-btn-list">
+            Découvrir plus de citations
+          </router-link>
+        </div>
       </div>
     </main>
 
@@ -815,6 +821,65 @@ onMounted(() => {
     width: 50px;
     height: 50px;
     font-size: 24px;
+  }
+}
+
+/* Explore Section */
+.explore-section {
+  display: flex;
+  justify-content: center;
+  padding: 20px 0;
+  margin-top: 12px;
+}
+
+.explore-btn-list {
+  padding: 12px 24px;
+  border-radius: 999px;
+  border: none;
+  background: linear-gradient(135deg, #a855ff 0%, #6366f1 100%);
+  color: #f9fafb;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.12s ease, box-shadow 0.12s ease, filter 0.12s ease;
+  box-shadow: 0 18px 40px rgba(88, 28, 135, 0.7);
+}
+
+.explore-btn-list:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.05);
+  box-shadow: 0 24px 60px rgba(88, 28, 135, 0.9);
+}
+
+.explore-btn-list:active {
+  transform: translateY(0);
+}
+
+@media (max-width: 480px) {
+  .explore-section {
+    padding: 16px 0;
+    margin-top: 10px;
+  }
+
+  .explore-btn-list {
+    padding: 10px 20px;
+    font-size: 13px;
+  }
+}
+
+@media (min-width: 768px) {
+  .explore-section {
+    padding: 24px 0;
+    margin-top: 16px;
+  }
+
+  .explore-btn-list {
+    padding: 14px 28px;
+    font-size: 15px;
   }
 }
 </style>
