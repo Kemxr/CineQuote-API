@@ -3,7 +3,8 @@ import { ref, onMounted, onUnmounted } from "vue";
 import { WSClientRoom } from "wsmini";
 
 // WebSocket instance
-const ws = new WSClientRoom(`ws://${import.meta.env.VITE_WS_HOST}:${import.meta.env.VITE_WS_PORT}`);
+const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+const ws = new WSClientRoom(`${protocol}//${import.meta.env.VITE_WS_HOST}:${import.meta.env.VITE_WS_PORT}`);
 
 // Reactive state
 const roomName = ref("");
