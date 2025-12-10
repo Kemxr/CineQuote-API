@@ -1,3 +1,44 @@
+<script setup>
+import { ref } from 'vue'
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
+const email = ref('')
+const password = ref('')
+const error = ref('')
+const isSubmitting = ref(false)
+
+const handleLogin = async () => {
+  error.value = ''
+  if (!email.value || !password.value) {
+    error.value = 'Veuillez remplir tous les champs'
+    return
+  }
+  isSubmitting.value = true
+  try {
+    const response = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: email.value,
+        password: password.value
+      }),
+      credentials: 'include'
+    })
+    const data = await response.json()
+    if (!response.ok) {
+      error.value = data.message || 'Erreur de connexion'
+      return
+    }
+    router.push('/')
+  } catch (err) {
+    error.value = 'Erreur de connexion au serveur'
+  } finally {
+    isSubmitting.value = false
+  }
+}
+</script>
+
 <template>
   <div class="login-container">
     <div class="login-card">
@@ -38,48 +79,6 @@
     </div>
   </div>
 </template>
-
-<script setup>
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
-
-const router = useRouter()
-const email = ref('')
-const password = ref('')
-const error = ref('')
-const isSubmitting = ref(false)
-
-const handleLogin = async () => {
-  error.value = ''
-  if (!email.value || !password.value) {
-    error.value = 'Veuillez remplir tous les champs'
-    return
-  }
-  isSubmitting.value = true
-  try {
-    const response = await fetch('/api/auth/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        email: email.value,
-        password: password.value
-      }),
-      credentials: 'include'
-    })
-    const data = await response.json()
-    if (!response.ok) {
-      error.value = data.message || 'Erreur de connexion'
-      return
-    }
-    // Optionnel: stocker user dans le store si besoin
-    router.push('/')
-  } catch (err) {
-    error.value = 'Erreur de connexion au serveur'
-  } finally {
-    isSubmitting.value = false
-  }
-}
-</script>
 
 <style scoped>* {
   margin: 0;

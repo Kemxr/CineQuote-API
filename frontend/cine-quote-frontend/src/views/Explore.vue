@@ -125,25 +125,19 @@
 <script setup>
 import { ref, watch, onMounted } from "vue";
 import { useRouter } from "vue-router";
+import { useFavorites } from "@/composables/useFavorites";
+import { useEmotions } from "@/composables/useEmotions";
 
 const router = useRouter();
+const { favorites, fetchFavorites, isFavorite, toggleFavorite } = useFavorites();
+const { emotions, getEmotionIcon } = useEmotions();
 
 const search = ref("");
 const selectedEmotion = ref("tout");
 const quotes = ref([]);
 const loading = ref(false);
 const error = ref(null);
-const favorites = ref([]);
 const selectedQuote = ref(null);
-
-const emotions = [
-  { id: "tout", label: "Tout", icon: "⭐" },
-  { id: "joie", label: "Joie", icon: "😊" },
-  { id: "tristesse", label: "Tristesse", icon: "😭" },
-  { id: "amour", label: "Amour", icon: "❤️" },
-  { id: "nostalgie", label: "Nostalgie", icon: "🌙" },
-  { id: "anxiété", label: "Anxiété", icon: "🚩" },
-];
 
 async function fetchQuotes() {
   try {
@@ -180,75 +174,8 @@ async function fetchQuotes() {
   }
 }
 
-function goBack() {
-  router.back();
-}
-
 function selectEmotion(id) {
   selectedEmotion.value = id;
-}
-
-async function fetchFavorites() {
-  try {
-    const response = await fetch("/api/favorites", {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      credentials: "include"
-    });
-
-    if (response.ok) {
-      const data = await response.json();
-      favorites.value = (data || []).map(q => q._id);
-    }
-  } catch (e) {
-    console.error("Error fetching favorites:", e);
-  }
-}
-
-function isFavorite(quoteId) {
-  return favorites.value.includes(quoteId);
-}
-
-async function toggleFavorite(quoteId) {
-  try {
-    if (isFavorite(quoteId)) {
-      const response = await fetch("/api/favorites", {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        credentials: "include",
-        body: JSON.stringify({ quoteId })
-      });
-
-      if (response.ok) {
-        favorites.value = favorites.value.filter(id => id !== quoteId);
-      }
-    } else {
-      const response = await fetch("/api/favorites", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        credentials: "include",
-        body: JSON.stringify({ quoteId })
-      });
-
-      if (response.ok) {
-        favorites.value.push(quoteId);
-      } else if (response.status === 401) {
-        alert("Veuillez vous connecter pour ajouter des favoris");
-      } else {
-        const data = await response.json();
-        alert(data.message || "Erreur lors de l'ajout aux favoris");
-      }
-    }
-  } catch (e) {
-    console.error("Error toggling favorite:", e);
-    alert("Erreur lors de la modification des favoris");
-  }
 }
 
 function openQuoteDetail(quote) {
@@ -257,17 +184,6 @@ function openQuoteDetail(quote) {
 
 function closeQuoteDetail() {
   selectedQuote.value = null;
-}
-
-function getEmotionEmoji(emotion) {
-  const emotionMap = {
-    "joie": "😊",
-    "tristesse": "😭",
-    "amour": "❤️",
-    "nostalgie": "🌙",
-    "anxiété": "🚩"
-  };
-  return emotionMap[emotion] || "⭐";
 }
 
 let searchTimeout = null;

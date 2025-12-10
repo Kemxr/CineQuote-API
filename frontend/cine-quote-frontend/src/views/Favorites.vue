@@ -127,15 +127,16 @@
 <script setup>
 import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
+import { useEmotions } from "@/composables/useEmotions";
 
 const router = useRouter();
+const { getEmotionIcon } = useEmotions();
 
 const favorites = ref([]);
 const loading = ref(false);
 const error = ref(null);
 const selectedQuote = ref(null);
 
-// Fetch user's favorites
 async function fetchFavorites() {
   try {
     loading.value = true;
@@ -166,7 +167,6 @@ async function fetchFavorites() {
   }
 }
 
-// Remove a favorite
 async function removeFavorite(quoteId) {
   try {
     const response = await fetch("/api/favorites", {
@@ -182,7 +182,6 @@ async function removeFavorite(quoteId) {
       throw new Error("Erreur lors de la suppression du favori");
     }
 
-    // Remove from local list
     favorites.value = favorites.value.filter(q => q._id !== quoteId);
     closeQuoteDetail();
   } catch (e) {
@@ -197,17 +196,6 @@ function openQuoteDetail(quote) {
 
 function closeQuoteDetail() {
   selectedQuote.value = null;
-}
-
-function getEmotionEmoji(emotion) {
-  const emotionMap = {
-    "joie": "😊",
-    "tristesse": "😭",
-    "amour": "❤️",
-    "nostalgie": "🌙",
-    "anxiété": "🚩"
-  };
-  return emotionMap[emotion] || "⭐";
 }
 
 function goBack() {
