@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 import * as dotenv from "dotenv";
 import Film from "./models/film.js";
 import Quote from "./models/quote.js";
+import User from "./models/user.js";
 
 dotenv.config();
 
@@ -9,6 +10,21 @@ await mongoose.connect(process.env.DATABASE_URL);
 
 await Quote.deleteMany();
 await Film.deleteMany();
+
+const adminEmail = process.env.SEED_ADMIN_EMAIL || "admin@cinequote.test";
+const adminPassword = process.env.SEED_ADMIN_PASSWORD || "admin123";
+const adminName = process.env.SEED_ADMIN_NAME || "Admin";
+
+let admin = await User.findOne({ email: adminEmail });
+if (!admin) {
+  admin = new User({
+    name: adminName,
+    email: adminEmail,
+    password: adminPassword,
+    role: "admin",
+  });
+  await admin.save();
+}
 
 const films = await Film.insertMany([
   {

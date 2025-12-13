@@ -12,8 +12,8 @@ import { protect, adminOnly } from "../middlewares/authMiddleware.js";
 const router = express.Router();
 
 router.get("/", getQuotes);
-router.get("/:id", getQuoteById);
 router.get("/random", getRandomQuote);
+router.get("/:id", getQuoteById);
 router.post("/", protect, adminOnly, addQuote);
 router.patch("/:id", protect, adminOnly, updateQuote);
 router.delete("/:id", protect, adminOnly, deleteQuote);
