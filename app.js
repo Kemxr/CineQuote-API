@@ -86,9 +86,9 @@ const port = process.env.VITE_WS_PORT || 10000;
 httpServer.listen(port, () => console.log(`HTTP server listening on port ${port}`));
 wsServer.start({ server: httpServer });
 
-// Periodic job to send a test push notification every 60 seconds
+// Periodic job to send a push notification every day at 00:00 (server local time)
 if (VAPID_PUBLIC_KEY && VAPID_PRIVATE_KEY) {
-  setInterval(async () => {
+  const sendDailyNotification = async () => {
     if (!pushSubscriptions.length) return;
 
     const payload = JSON.stringify({
@@ -103,7 +103,27 @@ if (VAPID_PUBLIC_KEY && VAPID_PRIVATE_KEY) {
         console.error("Error sending push notification", err);
       }
     }
-  }, 30_000);
+  };
+
+  const scheduleNextRun = () => {
+    const now = new Date();
+    const nextRun = new Date();
+    // Minuit
+    nextRun.setHours(0, 0, 0, 0);
+
+    if (now >= nextRun) {
+      nextRun.setDate(nextRun.getDate() + 1);
+    }
+
+    const delay = nextRun.getTime() - now.getTime();
+
+    setTimeout(async () => {
+      await sendDailyNotification();
+      setInterval(sendDailyNotification, 24 * 60 * 60 * 1000);
+    }, delay);
+  };
+
+  scheduleNextRun();
 }
 
 export default app;
