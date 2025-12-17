@@ -13,6 +13,7 @@ const currentTime = ref(new Date().toLocaleTimeString('fr-FR'));
 let dailyRefreshTimeout = null;
 let dailyRefreshInterval = null;
 let timeInterval = null;
+let notificationInterval = null;
 
 const backgroundStyle = computed(() => {
   const image = quote.value?.film?.image;
@@ -156,6 +157,22 @@ onMounted(() => {
   timeInterval = setInterval(() => {
     currentTime.value = new Date().toLocaleTimeString('fr-FR');
   }, 1000);
+
+  if (typeof window !== 'undefined' && 'Notification' in window) {
+    if (Notification.permission === 'default') {
+      Notification.requestPermission();
+    }
+
+    if (Notification.permission === 'granted') {
+      notificationInterval = setInterval(() => {
+        if (Notification.permission === 'granted') {
+          new Notification('Nouvelle citation', {
+            body: "Une nouvelle citation est dispo aujourd'hui.",
+          });
+        }
+      }, 60_000);
+    }
+  }
 });
 
 onUnmounted(() => {
@@ -167,6 +184,9 @@ onUnmounted(() => {
   }
   if (timeInterval) {
     clearInterval(timeInterval);
+  }
+  if (notificationInterval) {
+    clearInterval(notificationInterval);
   }
 });
 </script>
