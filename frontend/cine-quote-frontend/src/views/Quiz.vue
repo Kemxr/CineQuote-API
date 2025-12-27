@@ -12,16 +12,26 @@ const chatInput = ref("");
 const currentRoom = ref(null);
 const errorMessage = ref("");
 
-// Nouveaux états
+const currentQuestion = ref(null);
+const questionIndex = ref(0);
+const totalQuestions = ref(0);
+const timeLeft = ref(0);
+const questionTimer = ref(null);
+const hasAnswered = ref(false);
+const selectedAnswer = ref("");
+const scores = ref([]);
+const questionResults = ref(null);
+const gameRunning = ref(false);
+const gameFinished = ref(false);
+
 const isHost = ref(false);
 const isReady = ref(false);
 
-const lobbyDom = ref(null);
-const roomDom = ref(null);
-
 onMounted(() => {
   const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-  const socketUrl = `${protocol}//${import.meta.env.VITE_WS_HOST}:${import.meta.env.VITE_WS_PORT}`;
+  const socketUrl = `${protocol}//${import.meta.env.VITE_WS_HOST}:${
+    import.meta.env.VITE_WS_PORT
+  }`;
 
   socket.value = io(socketUrl, {
     transports: ["websocket", "polling"],
@@ -89,7 +99,61 @@ onMounted(() => {
   // Pour l’instant, on se contente de log le start
   socket.value.on("game-started", ({ roomName: rn, startedAt }) => {
     console.log("Game started in room", rn, "at", new Date(startedAt));
-    // Ici, plus tard, on affichera les questions / état de jeu
+  });
+
+  socket.value.on("game-started", ({ roomName: rn, totalQuestions: total }) => {
+    if (!currentRoom.value || currentRoom.value.name !== rn) return;
+    console.log("Game started in room", rn);
+    gameRunning.value = true;
+    gameFinished.value = false;
+    questionResults.value = null;
+    scores.value = [];
+    questionIndex.value = 0;
+    totalQuestions.value = total;
+  });
+
+  socket.value.on("question", ({ question, timeLimitMs }) => {
+    console.log("New question:", question);
+    currentQuestion.value = question;
+    questionIndex.value = question.index + 1;
+    timeLeft.value = Math.floor(timeLimitMs / 1000);
+    hasAnswered.value = false;
+    selectedAnswer.value = "";
+    questionResults.value = null;
+
+    if (questionTimer.value) {
+      clearInterval(questionTimer.value);
+    }
+    questionTimer.value = setInterval(() => {
+      if (timeLeft.value > 0) {
+        timeLeft.value -= 1;
+      }
+    }, 1000);
+  });
+
+  socket.value.on(
+    "question-ended",
+    ({ questionIndex: qi, results, scores: sc }) => {
+      console.log("Question ended:", qi, results, sc);
+      if (questionTimer.value) {
+        clearInterval(questionTimer.value);
+        questionTimer.value = null;
+      }
+      questionResults.value = results;
+      scores.value = sc;
+    }
+  );
+
+  socket.value.on("game-ended", ({ scores: sc }) => {
+    console.log("Game ended:", sc);
+    gameRunning.value = false;
+    gameFinished.value = true;
+    currentQuestion.value = null;
+    if (questionTimer.value) {
+      clearInterval(questionTimer.value);
+      questionTimer.value = null;
+    }
+    scores.value = sc;
   });
 });
 
@@ -157,6 +221,21 @@ const startGame = () => {
   socket.value.emit("start-game");
 };
 
+const submitAnswer = (value) => {
+  if (!socket.value || !currentRoom.value || !currentQuestion.value) return;
+  if (hasAnswered.value) return;
+
+  const answerToSend = value ?? selectedAnswer.value;
+
+  socket.value.emit("answer-question", {
+    questionId: currentQuestion.value.id,
+    answer: answerToSend,
+  });
+
+  selectedAnswer.value = answerToSend;
+  hasAnswered.value = true;
+};
+
 const formatTime = (timestamp) => {
   return new Date(timestamp).toLocaleTimeString();
 };
@@ -167,7 +246,7 @@ const formatTime = (timestamp) => {
     <!-- Lobby View -->
     <div v-if="!currentRoom" ref="lobbyDom" class="lobby">
       <h1>Lobby</h1>
-      
+
       <form id="room-form" @submit.prevent="joinOrCreateRoom(roomName)">
         <input
           id="name"
@@ -202,73 +281,122 @@ const formatTime = (timestamp) => {
     </div>
 
     <!-- Room View -->
-<div v-else ref="roomDom" class="room">
-  <div class="room-header">
-    <h1>
-      Room: {{ currentRoom.name }}
-      <span v-if="isHost" class="host-badge">(Host)</span>
-    </h1>
+    <div v-else ref="roomDom" class="room">
+      <div class="room-header">
+        <h1>
+          Room: {{ currentRoom.name }}
+          <span v-if="isHost" class="host-badge">(Host)</span>
+        </h1>
 
-    <div class="room-actions">
-      <button id="ready" @click="toggleReady">
-        {{ isReady ? "Not ready" : "Ready" }}
-      </button>
+        <div class="room-actions">
+          <button id="ready" @click="toggleReady">
+            {{ isReady ? "Not ready" : "Ready" }}
+          </button>
 
-      <button
-        id="start"
-        v-if="isHost"
-        @click="startGame"
-      >
-        Start game
-      </button>
+          <button
+            id="start"
+            v-if="isHost && !gameRunning && !gameFinished"
+            @click="startGame"
+          >
+            Start game
+          </button>
 
-      <button id="leave" @click="leaveRoom">Leave Room</button>
-    </div>
-  </div>
-
-  <div class="room-content">
-    <div class="chat-container">
-      <div id="chat">
-        <p v-for="(message, index) in messages" :key="`${message.time}-${index}`">
-          <time>{{ formatTime(message.time) }}</time>
-          <span class="user">{{ message.user }}:</span>
-          <span class="msg">{{ message.msg }}</span>
-        </p>
-        <p v-if="messages.length === 0" class="no-messages">
-          No messages yet. Start the conversation!
-        </p>
+          <button id="leave" @click="leaveRoom">Leave Room</button>
+        </div>
       </div>
 
-      <form id="chat-form" @submit.prevent="sendMessage">
-        <input
-          v-model="chatInput"
-          placeholder="Type a message"
-          autofocus
-        />
-        <button type="submit" :disabled="!chatInput.trim()">Send</button>
-      </form>
-    </div>
+      <div class="room-content">
+        <div class="chat-container" v-if="!gameRunning && !gameFinished">
+          <div id="chat">
+            <p
+              v-for="(message, index) in messages"
+              :key="`${message.time}-${index}`"
+            >
+              <time>{{ formatTime(message.time) }}</time>
+              <span class="user">{{ message.user }}:</span>
+              <span class="msg">{{ message.msg }}</span>
+            </p>
+            <p v-if="messages.length === 0" class="no-messages">
+              No messages yet. Start the conversation!
+            </p>
+          </div>
 
-    <div id="users-list">
-      <h2>Users ({{ users.length }})</h2>
-      <ul v-if="users.length > 0">
-        <li v-for="user in users" :key="user.id">
-          <span class="user-name">
-            {{ user.user }}
-            <span v-if="user.host" class="host-tag">[Host]</span>
-          </span>
-          <span
-            class="ready-tag"
-            :class="user.ready ? 'ready' : 'not-ready'"
-          >
-            {{ user.ready ? "Ready" : "Waiting" }}
-          </span>
-        </li>
-      </ul>
-      <p v-else class="no-users">No users in this room</p>
+          <form id="chat-form" @submit.prevent="sendMessage">
+            <input v-model="chatInput" placeholder="Type a message" autofocus />
+            <button type="submit" :disabled="!chatInput.trim()">Send</button>
+          </form>
+        </div>
+
+        <div class="quiz-panel" v-else>
+          <h2>Quiz</h2>
+
+          <div v-if="gameRunning">
+            <p>Question {{ questionIndex }} / {{ totalQuestions }}</p>
+            <p v-if="currentQuestion">
+              <strong>{{ currentQuestion.text }}</strong>
+            </p>
+            <p>Time left: {{ timeLeft }}s</p>
+
+            <div v-if="currentQuestion && currentQuestion.options">
+              <button
+                v-for="option in currentQuestion.options"
+                :key="option"
+                class="option-btn"
+                :class="{ selected: selectedAnswer === option }"
+                :disabled="hasAnswered"
+                @click="submitAnswer(option)"
+              >
+                {{ option }}
+              </button>
+            </div>
+
+            <p v-if="hasAnswered">You already answered this question.</p>
+          </div>
+
+          <div v-if="questionResults">
+            <h3>Question results</h3>
+            <ul>
+              <li v-for="r in questionResults" :key="r.id">
+                {{ r.user }} :
+                <span v-if="r.correct">
+                  +{{ r.bonus }} points (total {{ r.totalAfterQuestion }})
+                </span>
+                <span v-else> 0 point </span>
+              </li>
+            </ul>
+          </div>
+
+          <div v-if="gameFinished">
+            <h3>Final scores</h3>
+            <ol>
+              <li v-for="s in scores" :key="s.id">
+                {{ s.user }} - {{ s.score }} pts
+              </li>
+            </ol>
+          </div>
+        </div>
+
+        <!-- COLONNE DROITE : liste des users toujours visible -->
+        <div id="users-list">
+          <h2>Users ({{ users.length }})</h2>
+          <ul v-if="users.length > 0">
+            <li v-for="user in users" :key="user.id">
+              <span class="user-name">
+                {{ user.user }}
+                <span v-if="user.host" class="host-tag">[Host]</span>
+              </span>
+              <span
+                class="ready-tag"
+                :class="user.ready ? 'ready' : 'not-ready'"
+              >
+                {{ user.ready ? "Ready" : "Waiting" }}
+              </span>
+            </li>
+          </ul>
+          <p v-else class="no-users">No users in this room</p>
+        </div>
+      </div>
     </div>
-  </div>
-</div>
 
     <!-- Error Message -->
     <Transition name="fade">
@@ -596,6 +724,34 @@ const formatTime = (timestamp) => {
 .ready-tag.not-ready {
   background-color: #fde2e2;
   color: #f56c6c;
+}
+
+.option-btn {
+  display: block;
+  width: 100%;
+  margin: 8px 0;
+  padding: 10px 14px;
+  text-align: left;
+  border-radius: 4px;
+  color: #333;
+  border: 1px solid #ddd;
+  background-color: #fff;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.option-btn:hover:not(:disabled) {
+  background-color: #f5f7fa;
+}
+
+.option-btn.selected {
+  border-color: #42b983;
+  background-color: #e1f3d8;
+}
+
+.option-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 </style>
