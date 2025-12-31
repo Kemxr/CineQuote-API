@@ -20,7 +20,6 @@ const questionTimer = ref(null);
 const hasAnswered = ref(false);
 const selectedAnswer = ref("");
 const scores = ref([]);
-const questionResults = ref(null);
 const gameRunning = ref(false);
 const gameFinished = ref(false);
 
@@ -106,7 +105,6 @@ onMounted(() => {
     console.log("Game started in room", rn);
     gameRunning.value = true;
     gameFinished.value = false;
-    questionResults.value = null;
     scores.value = [];
     questionIndex.value = 0;
     totalQuestions.value = total;
@@ -119,7 +117,6 @@ onMounted(() => {
     timeLeft.value = Math.floor(timeLimitMs / 1000);
     hasAnswered.value = false;
     selectedAnswer.value = "";
-    questionResults.value = null;
 
     if (questionTimer.value) {
       clearInterval(questionTimer.value);
@@ -139,7 +136,6 @@ onMounted(() => {
         clearInterval(questionTimer.value);
         questionTimer.value = null;
       }
-      questionResults.value = results;
       scores.value = sc;
     }
   );
@@ -289,7 +285,11 @@ const formatTime = (timestamp) => {
         </h1>
 
         <div class="room-actions">
-          <button id="ready" @click="toggleReady">
+          <button
+            id="ready"
+            v-if="!gameRunning && !gameFinished"
+            @click="toggleReady"
+          >
             {{ isReady ? "Not ready" : "Ready" }}
           </button>
 
@@ -328,10 +328,9 @@ const formatTime = (timestamp) => {
         </div>
 
         <div class="quiz-panel" v-else>
-          <h2>Quiz</h2>
+          <h2>De quel film cette citation ?</h2>
 
           <div v-if="gameRunning">
-            <p>Question {{ questionIndex }} / {{ totalQuestions }}</p>
             <p v-if="currentQuestion">
               <strong>{{ currentQuestion.text }}</strong>
             </p>
@@ -349,21 +348,9 @@ const formatTime = (timestamp) => {
                 {{ option }}
               </button>
             </div>
+            <p>{{ questionIndex }} / {{ totalQuestions }}</p>
 
-            <p v-if="hasAnswered">You already answered this question.</p>
-          </div>
-
-          <div v-if="questionResults">
-            <h3>Question results</h3>
-            <ul>
-              <li v-for="r in questionResults" :key="r.id">
-                {{ r.user }} :
-                <span v-if="r.correct">
-                  +{{ r.bonus }} points (total {{ r.totalAfterQuestion }})
-                </span>
-                <span v-else> 0 point </span>
-              </li>
-            </ul>
+            <p v-if="hasAnswered">Tu as déjà répondu à cette question.</p>
           </div>
 
           <div v-if="gameFinished">
@@ -745,13 +732,12 @@ const formatTime = (timestamp) => {
 }
 
 .option-btn.selected {
-  border-color: #42b983;
-  background-color: #e1f3d8;
+  border-color: #f9f04c;
+  background-color: #f3efd8;
 }
 
 .option-btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
-
 </style>

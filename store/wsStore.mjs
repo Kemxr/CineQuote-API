@@ -1,69 +1,6 @@
 import { Server } from "socket.io";
 import fetch from "node-fetch";
-
-// Banque de questions locale pour le quiz
-const LOCAL_QUIZ_QUESTIONS = [
-  {
-    id: "q1",
-    text: 'De quel film vient la citation : "May the Force be with you" ?',
-    correctAnswer: "Star Wars",
-    options: ["Star Wars", "Star Trek", "Dune", "Avatar"],
-  },
-  {
-    id: "q2",
-    text: 'De quel film vient la citation : "I\'m going to make him an offer he can\'t refuse" ?',
-    correctAnswer: "The Godfather",
-    options: ["The Godfather", "Goodfellas", "Scarface", "Casino"],
-  },
-  {
-    id: "q3",
-    text: 'De quel film vient la citation : "You talking to me?" ?',
-    correctAnswer: "Taxi Driver",
-    options: ["Taxi Driver", "Raging Bull", "Goodfellas", "Pulp Fiction"],
-  },
-  {
-    id: "q4",
-    text: 'De quel film vient la citation : "Why so serious?" ?',
-    correctAnswer: "The Dark Knight",
-    options: ["The Dark Knight", "Joker", "Batman Begins", "Watchmen"],
-  },
-  {
-    id: "q5",
-    text: 'De quel film vient la citation : "Here\'s Johnny!" ?',
-    correctAnswer: "The Shining",
-    options: ["The Shining", "Psycho", "It", "The Exorcist"],
-  },
-  {
-    id: "q6",
-    text: 'De quel film vient la citation : "I\'ll be back" ?',
-    correctAnswer: "The Terminator",
-    options: ["The Terminator", "Predator", "RoboCop", "Die Hard"],
-  },
-  {
-    id: "q7",
-    text: 'De quel film vient la citation : "Houston, we have a problem" ?',
-    correctAnswer: "Apollo 13",
-    options: ["Apollo 13", "Gravity", "Interstellar", "Armageddon"],
-  },
-  {
-    id: "q8",
-    text: 'De quel film vient la citation : "Life is like a box of chocolates" ?',
-    correctAnswer: "Forrest Gump",
-    options: ["Forrest Gump", "The Green Mile", "Cast Away", "Rain Man"],
-  },
-  {
-    id: "q9",
-    text: 'De quel film vient la citation : "Say hello to my little friend!" ?',
-    correctAnswer: "Scarface",
-    options: ["Scarface", "Carlito's Way", "Heat", "The Untouchables"],
-  },
-  {
-    id: "q10",
-    text: 'De quel film vient la citation : "I\'m king of the world!" ?',
-    correctAnswer: "Titanic",
-    options: ["Titanic", "Avatar", "The Notebook", "La La Land"],
-  },
-];
+import { filmsSeed, quotesSeed } from "./quizData.mjs";
 
 
 class SocketIOManager {
@@ -71,9 +8,50 @@ class SocketIOManager {
     this.io = null;
     this.rooms = new Map();
     this.roomTimers = new Map();
-
     this.quizzes = new Map();
   }
+
+  buildQuizQuestionsFromSeed(limit = 10) {
+  // Map rapide idFilm -> film
+  const filmById = new Map(filmsSeed.map((f) => [f.id, f]));
+
+  // Construit la liste des titres pour les mauvaises réponses
+  const allFilmTitles = filmsSeed.map((f) => f.title);
+
+  const questions = [];
+
+  for (const quote of quotesSeed) {
+    const film = filmById.get(quote.filmId);
+    if (!film) continue;
+
+    const correctTitle = film.title;
+    const quoteText = quote.text;
+
+    // 3 films faux
+    const wrongChoices = allFilmTitles
+      .filter((t) => t !== correctTitle)
+      .sort(() => Math.random() - 0.5)
+      .slice(0, 3);
+
+    if (wrongChoices.length < 3) continue;
+
+    const options = [correctTitle, ...wrongChoices].sort(
+      () => Math.random() - 0.5
+    );
+
+    questions.push({
+      id: quote.id,
+      text: `"${quoteText}"`,
+      correctAnswer: correctTitle,
+      options,
+    });
+  }
+
+  // Shuffle des questions pour ne pas prédire l’ordre
+  const shuffled = questions.sort(() => Math.random() - 0.5);
+  return shuffled.slice(0, limit);
+}
+
 
 
   start({ server }) {
@@ -302,16 +280,11 @@ class SocketIOManager {
     return;
   }
 
-  // On clone + mélange les questions locales et on en prend 10
-  const questionsPool = [...LOCAL_QUIZ_QUESTIONS];
-
-  // shuffle simple
-  for (let i = questionsPool.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [questionsPool[i], questionsPool[j]] = [questionsPool[j], questionsPool[i]];
+  const questions = this.buildQuizQuestionsFromSeed(10);
+  if (!questions.length) {
+    socket.emit("error", { message: "No quiz questions available" });
+    return;
   }
-
-  const questions = questionsPool.slice(0, 10);
 
   const quizState = {
     roomName,
@@ -390,7 +363,7 @@ class SocketIOManager {
       .filter((a) => a.correct)
       .sort((a, b) => a.time - b.time);
 
-    const bonuses = [10, 7, 5]; // 1er, 2e, 3e
+    const bonuses = [10, 7, 5];
     const minBonus = 3;
 
     const perPlayer = [];
