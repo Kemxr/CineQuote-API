@@ -1,6 +1,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from "vue";
 import { io } from "socket.io-client";
+import { getCurrentUser } from "../services/api";
 
 const socket = ref(null);
 
@@ -11,6 +12,7 @@ const users = ref([]);
 const chatInput = ref("");
 const currentRoom = ref(null);
 const errorMessage = ref("");
+const currentUser = ref(null);
 
 const currentQuestion = ref(null);
 const questionIndex = ref(0);
@@ -26,7 +28,13 @@ const gameFinished = ref(false);
 const isHost = ref(false);
 const isReady = ref(false);
 
-onMounted(() => {
+onMounted(async () => {
+  try {
+    currentUser.value = await getCurrentUser();
+  } catch (e) {
+    currentUser.value = null;
+  }
+
   const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
   const socketUrl = `${protocol}//${import.meta.env.VITE_WS_HOST}:${
     import.meta.env.VITE_WS_PORT
@@ -37,6 +45,9 @@ onMounted(() => {
     reconnection: true,
     reconnectionDelay: 1000,
     reconnectionAttempts: 5,
+    auth: {
+      username: currentUser.value?.name || null,
+    },
   });
 
   socket.value.on("connect", () => {
@@ -217,11 +228,20 @@ const startGame = () => {
   socket.value.emit("start-game");
 };
 
+const vibrate = (pattern = 50) => {
+  if (typeof navigator !== "undefined" && "vibrate" in navigator) {
+    navigator.vibrate(pattern);
+    console.log("vibre")
+  }
+};
+
 const submitAnswer = (value) => {
   if (!socket.value || !currentRoom.value || !currentQuestion.value) return;
   if (hasAnswered.value) return;
 
   const answerToSend = value ?? selectedAnswer.value;
+
+  vibrate(40);
 
   socket.value.emit("answer-question", {
     questionId: currentQuestion.value.id,

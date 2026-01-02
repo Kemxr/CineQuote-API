@@ -2,7 +2,6 @@ import { Server } from "socket.io";
 import fetch from "node-fetch";
 import { filmsSeed, quotesSeed } from "./quizData.mjs";
 
-
 class SocketIOManager {
   constructor() {
     this.io = null;
@@ -12,47 +11,45 @@ class SocketIOManager {
   }
 
   buildQuizQuestionsFromSeed(limit = 10) {
-  // Map rapide idFilm -> film
-  const filmById = new Map(filmsSeed.map((f) => [f.id, f]));
+    // Map rapide idFilm -> film
+    const filmById = new Map(filmsSeed.map((f) => [f.id, f]));
 
-  // Construit la liste des titres pour les mauvaises réponses
-  const allFilmTitles = filmsSeed.map((f) => f.title);
+    // Construit la liste des titres pour les mauvaises réponses
+    const allFilmTitles = filmsSeed.map((f) => f.title);
 
-  const questions = [];
+    const questions = [];
 
-  for (const quote of quotesSeed) {
-    const film = filmById.get(quote.filmId);
-    if (!film) continue;
+    for (const quote of quotesSeed) {
+      const film = filmById.get(quote.filmId);
+      if (!film) continue;
 
-    const correctTitle = film.title;
-    const quoteText = quote.text;
+      const correctTitle = film.title;
+      const quoteText = quote.text;
 
-    // 3 films faux
-    const wrongChoices = allFilmTitles
-      .filter((t) => t !== correctTitle)
-      .sort(() => Math.random() - 0.5)
-      .slice(0, 3);
+      // 3 films faux
+      const wrongChoices = allFilmTitles
+        .filter((t) => t !== correctTitle)
+        .sort(() => Math.random() - 0.5)
+        .slice(0, 3);
 
-    if (wrongChoices.length < 3) continue;
+      if (wrongChoices.length < 3) continue;
 
-    const options = [correctTitle, ...wrongChoices].sort(
-      () => Math.random() - 0.5
-    );
+      const options = [correctTitle, ...wrongChoices].sort(
+        () => Math.random() - 0.5
+      );
 
-    questions.push({
-      id: quote.id,
-      text: `"${quoteText}"`,
-      correctAnswer: correctTitle,
-      options,
-    });
+      questions.push({
+        id: quote.id,
+        text: `"${quoteText}"`,
+        correctAnswer: correctTitle,
+        options,
+      });
+    }
+
+    // Shuffle des questions pour ne pas prédire l’ordre
+    const shuffled = questions.sort(() => Math.random() - 0.5);
+    return shuffled.slice(0, limit);
   }
-
-  // Shuffle des questions pour ne pas prédire l’ordre
-  const shuffled = questions.sort(() => Math.random() - 0.5);
-  return shuffled.slice(0, limit);
-}
-
-
 
   start({ server }) {
     const origins = process.env.VITE_WS_HOST ?? "localhost";
@@ -149,9 +146,18 @@ class SocketIOManager {
     // Si premier user de la room, il devient host
     const isHost = room.users.size === 0;
 
+    const providedName =
+      socket.handshake.auth?.username ||
+      socket.handshake.query?.username ||
+      null;
+
+    const displayName =
+      (typeof providedName === "string" && providedName.trim()) ||
+      `Anon. ${socket.id.slice(0, 4)}`;
+
     const user = {
       id: socket.id,
-      user: `Anon. ${socket.id.slice(0, 4)}`,
+      user: displayName,
       ready: false,
       host: isHost,
     };
@@ -257,106 +263,105 @@ class SocketIOManager {
   }
 
   async handleStartGame(socket) {
-  const roomName = socket.currentRoom;
-  if (!roomName) {
-    socket.emit("error", { message: "You are not in a room" });
-    return;
+    const roomName = socket.currentRoom;
+    if (!roomName) {
+      socket.emit("error", { message: "You are not in a room" });
+      return;
+    }
+
+    const room = this.rooms.get(roomName);
+    if (!room) {
+      socket.emit("error", { message: "Room not found" });
+      return;
+    }
+
+    const user = room.users.get(socket.id);
+    if (!user || !user.host) {
+      socket.emit("error", { message: "Only host can start the game" });
+      return;
+    }
+
+    if (this.quizzes.has(roomName)) {
+      socket.emit("error", {
+        message: "A game is already running in this room",
+      });
+      return;
+    }
+
+    const questions = this.buildQuizQuestionsFromSeed(10);
+    if (!questions.length) {
+      socket.emit("error", { message: "No quiz questions available" });
+      return;
+    }
+
+    const quizState = {
+      roomName,
+      questions,
+      currentIndex: 0,
+      scores: new Map(), // socketId -> score
+      answersForCurrent: [],
+      questionStartTime: null,
+      timer: null,
+      questionDurationMs: 10000,
+      finished: false,
+    };
+
+    // init scores
+    for (const player of room.users.values()) {
+      quizState.scores.set(player.id, 0);
+    }
+
+    this.quizzes.set(roomName, quizState);
+
+    this.io.to(roomName).emit("game-started", {
+      roomName,
+      totalQuestions: quizState.questions.length,
+    });
+
+    this.sendQuestion(roomName);
   }
-
-  const room = this.rooms.get(roomName);
-  if (!room) {
-    socket.emit("error", { message: "Room not found" });
-    return;
-  }
-
-  const user = room.users.get(socket.id);
-  if (!user || !user.host) {
-    socket.emit("error", { message: "Only host can start the game" });
-    return;
-  }
-
-  if (this.quizzes.has(roomName)) {
-    socket.emit("error", { message: "A game is already running in this room" });
-    return;
-  }
-
-  const questions = this.buildQuizQuestionsFromSeed(10);
-  if (!questions.length) {
-    socket.emit("error", { message: "No quiz questions available" });
-    return;
-  }
-
-  const quizState = {
-    roomName,
-    questions,
-    currentIndex: 0,
-    scores: new Map(), // socketId -> score
-    answersForCurrent: [],
-    questionStartTime: null,
-    timer: null,
-    questionDurationMs: 10000,
-    finished: false,
-  };
-
-  // init scores
-  for (const player of room.users.values()) {
-    quizState.scores.set(player.id, 0);
-  }
-
-  this.quizzes.set(roomName, quizState);
-
-  this.io.to(roomName).emit("game-started", {
-    roomName,
-    totalQuestions: quizState.questions.length,
-  });
-
-  this.sendQuestion(roomName);
-}
-
 
   handleAnswerQuestion(socket, { questionId, answer }) {
-  const roomName = socket.currentRoom;
-  if (!roomName) return;
+    const roomName = socket.currentRoom;
+    if (!roomName) return;
 
-  const quiz = this.quizzes.get(roomName);
-  const room = this.rooms.get(roomName);
-  if (!quiz || !room || quiz.finished) return;
+    const quiz = this.quizzes.get(roomName);
+    const room = this.rooms.get(roomName);
+    if (!quiz || !room || quiz.finished) return;
 
-  const player = room.users.get(socket.id);
-  if (!player) return;
+    const player = room.users.get(socket.id);
+    if (!player) return;
 
-  const currentQuestion = quiz.questions[quiz.currentIndex];
-  if (!currentQuestion) return;
+    const currentQuestion = quiz.questions[quiz.currentIndex];
+    if (!currentQuestion) return;
 
-  const alreadyAnswered = quiz.answersForCurrent.some(
-    (a) => a.socketId === socket.id
-  );
-  if (alreadyAnswered) return;
+    const alreadyAnswered = quiz.answersForCurrent.some(
+      (a) => a.socketId === socket.id
+    );
+    if (alreadyAnswered) return;
 
-  const now = Date.now();
-  const elapsed = now - (quiz.questionStartTime || now);
+    const now = Date.now();
+    const elapsed = now - (quiz.questionStartTime || now);
 
-  const correctAnswer = currentQuestion.correctAnswer;
-  const isCorrect =
-    String(answer).trim().toLowerCase() ===
-    correctAnswer.trim().toLowerCase();
+    const correctAnswer = currentQuestion.correctAnswer;
+    const isCorrect =
+      String(answer).trim().toLowerCase() ===
+      correctAnswer.trim().toLowerCase();
 
-  quiz.answersForCurrent.push({
-    socketId: socket.id,
-    correct: isCorrect,
-    time: elapsed,
-  });
+    quiz.answersForCurrent.push({
+      socketId: socket.id,
+      correct: isCorrect,
+      time: elapsed,
+    });
 
-  if (quiz.answersForCurrent.length >= room.users.size) {
-    if (quiz.timer) {
-      clearTimeout(quiz.timer);
-      quiz.timer = null;
+    if (quiz.answersForCurrent.length >= room.users.size) {
+      if (quiz.timer) {
+        clearTimeout(quiz.timer);
+        quiz.timer = null;
+      }
+      this.endQuestion(roomName);
     }
-    this.endQuestion(roomName);
   }
-}
-
-
 
   computeScoresForQuestion(quiz, room) {
     const answers = quiz.answersForCurrent
@@ -414,42 +419,40 @@ class SocketIOManager {
   }
 
   sendQuestion(roomName) {
-  const quiz = this.quizzes.get(roomName);
-  const room = this.rooms.get(roomName);
-  if (!quiz || !room) return;
+    const quiz = this.quizzes.get(roomName);
+    const room = this.rooms.get(roomName);
+    if (!quiz || !room) return;
 
-  if (quiz.currentIndex >= quiz.questions.length) {
-    this.endGame(roomName);
-    return;
+    if (quiz.currentIndex >= quiz.questions.length) {
+      this.endGame(roomName);
+      return;
+    }
+
+    quiz.answersForCurrent = [];
+    quiz.questionStartTime = Date.now();
+
+    const question = quiz.questions[quiz.currentIndex];
+
+    const payload = {
+      index: quiz.currentIndex,
+      total: quiz.questions.length,
+      id: question.id,
+      text: question.text,
+      options: question.options,
+    };
+
+    this.io.to(roomName).emit("question", {
+      question: payload,
+      timeLimitMs: quiz.questionDurationMs,
+    });
+
+    if (quiz.timer) {
+      clearTimeout(quiz.timer);
+    }
+    quiz.timer = setTimeout(() => {
+      this.endQuestion(roomName);
+    }, quiz.questionDurationMs);
   }
-
-  quiz.answersForCurrent = [];
-  quiz.questionStartTime = Date.now();
-
-  const question = quiz.questions[quiz.currentIndex];
-
-  const payload = {
-    index: quiz.currentIndex,
-    total: quiz.questions.length,
-    id: question.id,
-    text: question.text,
-    options: question.options,
-  };
-
-  this.io.to(roomName).emit("question", {
-    question: payload,
-    timeLimitMs: quiz.questionDurationMs,
-  });
-
-  if (quiz.timer) {
-    clearTimeout(quiz.timer);
-  }
-  quiz.timer = setTimeout(() => {
-    this.endQuestion(roomName);
-  }, quiz.questionDurationMs);
-}
-
-
 
   endQuestion(roomName) {
     const quiz = this.quizzes.get(roomName);
