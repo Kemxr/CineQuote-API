@@ -261,9 +261,7 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   padding: 24px 32px;
-  background:
-    radial-gradient(circle at 0% 0%, #3b82f6 0, #020617 45%),
-    radial-gradient(circle at 50% 120%, #7c3aed 0, #020617 55%);
+  background: #050b1a;
   color: #f5f7ff;
   font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text",
     sans-serif;
