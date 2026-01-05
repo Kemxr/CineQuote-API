@@ -1,12 +1,10 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from "vue";
-import { WSClientRoom } from "wsmini";
+import { io } from "socket.io-client";
+import { getCurrentUser } from "../services/api";
 
-// WebSocket instance
-const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-const ws = new WSClientRoom(`${protocol}//${import.meta.env.VITE_WS_HOST}:${import.meta.env.VITE_WS_PORT}`);
+const socket = ref(null);
 
-// Reactive state
 const roomName = ref("");
 const rooms = ref([]);
 const messages = ref([]);
@@ -14,96 +12,246 @@ const users = ref([]);
 const chatInput = ref("");
 const currentRoom = ref(null);
 const errorMessage = ref("");
+const currentUser = ref(null);
 
-// Template refs
-const lobbyDom = ref(null);
-const roomDom = ref(null);
+const currentQuestion = ref(null);
+const questionIndex = ref(0);
+const totalQuestions = ref(0);
+const timeLeft = ref(0);
+const questionTimer = ref(null);
+const hasAnswered = ref(false);
+const selectedAnswer = ref("");
+const scores = ref([]);
+const gameRunning = ref(false);
+const gameFinished = ref(false);
 
-// Connect to WebSocket server
+const isHost = ref(false);
+const isReady = ref(false);
+
 onMounted(async () => {
   try {
-    await ws.connect();
-
-    // Listen for room updates
-    ws.roomOnRooms((updatedRooms) => {
-      rooms.value = updatedRooms;
-    });
-  } catch (err) {
-    errorMessage.value = "Failed to connect to server";
-    console.error("WebSocket connection error:", err);
+    currentUser.value = await getCurrentUser();
+  } catch (e) {
+    currentUser.value = null;
   }
+
+  const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+  const socketUrl = `${protocol}//${import.meta.env.VITE_WS_HOST}:${
+    import.meta.env.VITE_WS_PORT
+  }`;
+
+  socket.value = io(socketUrl, {
+    transports: ["websocket", "polling"],
+    reconnection: true,
+    reconnectionDelay: 1000,
+    reconnectionAttempts: 5,
+    auth: {
+      username: currentUser.value?.name || null,
+    },
+  });
+
+  socket.value.on("connect", () => {
+    console.log("Connected to server");
+    errorMessage.value = "";
+  });
+
+  socket.value.on("connect_error", (error) => {
+    console.error("Connection error:", error);
+    errorMessage.value = "Failed to connect to server";
+  });
+
+  socket.value.on("disconnect", () => {
+    console.log("Disconnected from server");
+  });
+
+  socket.value.on("rooms-list", (updatedRooms) => {
+    rooms.value = updatedRooms;
+  });
+
+  socket.value.on("room-joined", ({ roomName: joinedRoom, user, host }) => {
+    console.log(`Joined room: ${joinedRoom} as ${user}, host: ${host}`);
+    currentRoom.value = {
+      name: joinedRoom,
+      user,
+    };
+    isHost.value = !!host;
+    isReady.value = false;
+    messages.value = [];
+    users.value = [];
+  });
+
+  socket.value.on("users-list", (updatedUsers) => {
+    users.value = updatedUsers;
+  });
+
+  socket.value.on("message", (data) => {
+    if (currentRoom.value) {
+      messages.value.push(data);
+    }
+  });
+
+  socket.value.on("foo", (data) => {
+    console.log("Received foo cmd from server:", data);
+  });
+
+  socket.value.on("error", ({ message }) => {
+    errorMessage.value = message;
+    setTimeout(() => (errorMessage.value = ""), 3000);
+  });
+
+  // Promotion automatique quand l’ancien host quitte
+  socket.value.on("host-promoted", ({ roomName: rn }) => {
+    if (currentRoom.value && currentRoom.value.name === rn) {
+      isHost.value = true;
+    }
+  });
+
+  // Pour l’instant, on se contente de log le start
+  socket.value.on("game-started", ({ roomName: rn, startedAt }) => {
+    console.log("Game started in room", rn, "at", new Date(startedAt));
+  });
+
+  socket.value.on("game-started", ({ roomName: rn, totalQuestions: total }) => {
+    if (!currentRoom.value || currentRoom.value.name !== rn) return;
+    console.log("Game started in room", rn);
+    gameRunning.value = true;
+    gameFinished.value = false;
+    scores.value = [];
+    questionIndex.value = 0;
+    totalQuestions.value = total;
+  });
+
+  socket.value.on("question", ({ question, timeLimitMs }) => {
+    console.log("New question:", question);
+    currentQuestion.value = question;
+    questionIndex.value = question.index + 1;
+    timeLeft.value = Math.floor(timeLimitMs / 1000);
+    hasAnswered.value = false;
+    selectedAnswer.value = "";
+
+    if (questionTimer.value) {
+      clearInterval(questionTimer.value);
+    }
+    questionTimer.value = setInterval(() => {
+      if (timeLeft.value > 0) {
+        timeLeft.value -= 1;
+      }
+    }, 1000);
+  });
+
+  socket.value.on(
+    "question-ended",
+    ({ questionIndex: qi, results, scores: sc }) => {
+      console.log("Question ended:", qi, results, sc);
+      if (questionTimer.value) {
+        clearInterval(questionTimer.value);
+        questionTimer.value = null;
+      }
+      scores.value = sc;
+    }
+  );
+
+  socket.value.on("game-ended", ({ scores: sc }) => {
+    console.log("Game ended:", sc);
+    gameRunning.value = false;
+    gameFinished.value = true;
+    currentQuestion.value = null;
+    if (questionTimer.value) {
+      clearInterval(questionTimer.value);
+      questionTimer.value = null;
+    }
+    scores.value = sc;
+  });
 });
 
-// Cleanup on component unmount
 onUnmounted(() => {
   if (currentRoom.value) {
-    currentRoom.value.leave();
+    leaveRoom();
   }
-  ws.disconnect?.();
+  if (socket.value) {
+    socket.value.disconnect();
+  }
 });
 
-// Join or create a room
-const joinOrCreateRoom = async (name) => {
+const joinOrCreateRoom = (name) => {
   if (!name?.trim()) {
     errorMessage.value = "Room name cannot be empty";
     setTimeout(() => (errorMessage.value = ""), 3000);
     return;
   }
 
-  try {
-    const room = await ws.roomCreateOrJoin(name);
-    showRoom(room);
-    errorMessage.value = "";
-  } catch (err) {
-    errorMessage.value = err.message || "Failed to join room";
+  if (!socket.value || !socket.value.connected) {
+    errorMessage.value = "Not connected to server";
     setTimeout(() => (errorMessage.value = ""), 3000);
+    return;
   }
-};
 
-// Show the room interface
-const showRoom = (room) => {
-  currentRoom.value = room;
   messages.value = [];
   users.value = [];
-  
-  room.onMessage(onRoomMessage);
-  room.onClients(onClients);
-  room.onCmd("foo", (data) =>
-    console.log("Received foo cmd from server:", data)
-  );
+  isHost.value = false;
+  isReady.value = false;
+
+  socket.value.emit("join-room", { roomName: name });
+  errorMessage.value = "";
 };
 
-// Handle incoming messages
-const onRoomMessage = (data) => {
-  messages.value.push(data);
-};
-
-// Handle user list updates
-const onClients = (updatedUsers) => {
-  users.value = updatedUsers;
-};
-
-// Send a message
 const sendMessage = () => {
   const message = chatInput.value.trim();
-  
-  if (message && currentRoom.value) {
-    currentRoom.value.send(message);
+
+  if (message && currentRoom.value && socket.value) {
+    socket.value.emit("send-message", {
+      roomName: currentRoom.value.name,
+      message,
+    });
     chatInput.value = "";
   }
 };
 
-// Leave the room
 const leaveRoom = () => {
-  if (currentRoom.value) {
-    currentRoom.value.leave();
+  if (currentRoom.value && socket.value) {
+    socket.value.emit("leave-room", { roomName: currentRoom.value.name });
     currentRoom.value = null;
     messages.value = [];
     users.value = [];
+    isHost.value = false;
+    isReady.value = false;
   }
 };
 
-// Format time helper
+const toggleReady = () => {
+  if (!socket.value || !currentRoom.value) return;
+  socket.value.emit("toggle-ready");
+};
+
+const startGame = () => {
+  if (!socket.value || !currentRoom.value) return;
+  socket.value.emit("start-game");
+};
+
+const vibrate = (pattern = 50) => {
+  if (typeof navigator !== "undefined" && "vibrate" in navigator) {
+    navigator.vibrate(pattern);
+    console.log("vibre")
+  }
+};
+
+const submitAnswer = (value) => {
+  if (!socket.value || !currentRoom.value || !currentQuestion.value) return;
+  if (hasAnswered.value) return;
+
+  const answerToSend = value ?? selectedAnswer.value;
+
+  vibrate(40);
+
+  socket.value.emit("answer-question", {
+    questionId: currentQuestion.value.id,
+    answer: answerToSend,
+  });
+
+  selectedAnswer.value = answerToSend;
+  hasAnswered.value = true;
+};
+
 const formatTime = (timestamp) => {
   return new Date(timestamp).toLocaleTimeString();
 };
@@ -114,7 +262,7 @@ const formatTime = (timestamp) => {
     <!-- Lobby View -->
     <div v-if="!currentRoom" ref="lobbyDom" class="lobby">
       <h1>Lobby</h1>
-      
+
       <form id="room-form" @submit.prevent="joinOrCreateRoom(roomName)">
         <input
           id="name"
@@ -151,14 +299,39 @@ const formatTime = (timestamp) => {
     <!-- Room View -->
     <div v-else ref="roomDom" class="room">
       <div class="room-header">
-        <h1>Room: {{ currentRoom.name }}</h1>
-        <button id="leave" @click="leaveRoom">Leave Room</button>
+        <h1>
+          Room: {{ currentRoom.name }}
+          <span v-if="isHost" class="host-badge">(Host)</span>
+        </h1>
+
+        <div class="room-actions">
+          <button
+            id="ready"
+            v-if="!gameRunning && !gameFinished"
+            @click="toggleReady"
+          >
+            {{ isReady ? "Not ready" : "Ready" }}
+          </button>
+
+          <button
+            id="start"
+            v-if="isHost && !gameRunning && !gameFinished"
+            @click="startGame"
+          >
+            Start game
+          </button>
+
+          <button id="leave" @click="leaveRoom">Leave Room</button>
+        </div>
       </div>
 
       <div class="room-content">
-        <div class="chat-container">
+        <div class="chat-container" v-if="!gameRunning && !gameFinished">
           <div id="chat">
-            <p v-for="(message, index) in messages" :key="`${message.time}-${index}`">
+            <p
+              v-for="(message, index) in messages"
+              :key="`${message.time}-${index}`"
+            >
               <time>{{ formatTime(message.time) }}</time>
               <span class="user">{{ message.user }}:</span>
               <span class="msg">{{ message.msg }}</span>
@@ -169,20 +342,62 @@ const formatTime = (timestamp) => {
           </div>
 
           <form id="chat-form" @submit.prevent="sendMessage">
-            <input
-              v-model="chatInput"
-              placeholder="Type a message"
-              autofocus
-            />
+            <input v-model="chatInput" placeholder="Type a message" autofocus />
             <button type="submit" :disabled="!chatInput.trim()">Send</button>
           </form>
         </div>
 
+        <div class="quiz-panel" v-else>
+          <h2>De quel film cette citation ?</h2>
+
+          <div v-if="gameRunning">
+            <p v-if="currentQuestion">
+              <strong>{{ currentQuestion.text }}</strong>
+            </p>
+            <p>Time left: {{ timeLeft }}s</p>
+
+            <div v-if="currentQuestion && currentQuestion.options">
+              <button
+                v-for="option in currentQuestion.options"
+                :key="option"
+                class="option-btn"
+                :class="{ selected: selectedAnswer === option }"
+                :disabled="hasAnswered"
+                @click="submitAnswer(option)"
+              >
+                {{ option }}
+              </button>
+            </div>
+            <p>{{ questionIndex }} / {{ totalQuestions }}</p>
+
+            <p v-if="hasAnswered">Tu as déjà répondu à cette question.</p>
+          </div>
+
+          <div v-if="gameFinished">
+            <h3>Final scores</h3>
+            <ol>
+              <li v-for="s in scores" :key="s.id">
+                {{ s.user }} - {{ s.score }} pts
+              </li>
+            </ol>
+          </div>
+        </div>
+
+        <!-- COLONNE DROITE : liste des users toujours visible -->
         <div id="users-list">
           <h2>Users ({{ users.length }})</h2>
           <ul v-if="users.length > 0">
             <li v-for="user in users" :key="user.id">
-              {{ user.user }}
+              <span class="user-name">
+                {{ user.user }}
+                <span v-if="user.host" class="host-tag">[Host]</span>
+              </span>
+              <span
+                class="ready-tag"
+                :class="user.ready ? 'ready' : 'not-ready'"
+              >
+                {{ user.ready ? "Ready" : "Waiting" }}
+              </span>
             </li>
           </ul>
           <p v-else class="no-users">No users in this room</p>
@@ -211,7 +426,6 @@ const formatTime = (timestamp) => {
   max-width: 800px;
 }
 
-/* Lobby Styles */
 .lobby h1 {
   margin-bottom: 20px;
 }
@@ -258,6 +472,7 @@ const formatTime = (timestamp) => {
 
 #room-listing th {
   background-color: #f5f5f5;
+  color: #333;
   font-weight: 600;
 }
 
@@ -280,7 +495,6 @@ const formatTime = (timestamp) => {
   padding: 40px;
 }
 
-/* Room Styles */
 .room-header {
   display: flex;
   justify-content: space-between;
@@ -396,6 +610,7 @@ const formatTime = (timestamp) => {
 #users-list h2 {
   margin-top: 0;
   font-size: 1.2em;
+  color: #f39c12;
 }
 
 #users-list ul {
@@ -418,7 +633,6 @@ const formatTime = (timestamp) => {
   font-style: italic;
 }
 
-/* Error Message */
 #error-message {
   position: fixed;
   bottom: 20px;
@@ -431,7 +645,6 @@ const formatTime = (timestamp) => {
   z-index: 1000;
 }
 
-/* Transitions */
 .fade-enter-active,
 .fade-leave-active {
   transition: opacity 0.3s ease;
@@ -442,7 +655,6 @@ const formatTime = (timestamp) => {
   opacity: 0;
 }
 
-/* Responsive */
 @media (max-width: 768px) {
   .room-content {
     grid-template-columns: 1fr;
@@ -452,5 +664,100 @@ const formatTime = (timestamp) => {
     max-height: 200px;
     overflow-y: auto;
   }
+}
+
+.host-badge {
+  font-size: 0.8rem;
+  color: #f39c12;
+  margin-left: 8px;
+}
+
+.room-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+#ready {
+  padding: 8px 16px;
+  background-color: #409eff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+#ready:hover {
+  background-color: #337ecc;
+}
+
+#start {
+  padding: 8px 16px;
+  background-color: #67c23a;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+#start:hover {
+  background-color: #4aa52d;
+}
+
+.user-name {
+  font-weight: 600;
+  color: #4aa52d;
+}
+
+.host-tag {
+  margin-left: 6px;
+  color: #f39c12;
+}
+
+.ready-tag {
+  float: right;
+  font-size: 0.9rem;
+  padding: 2px 8px;
+  border-radius: 12px;
+}
+
+.ready-tag.ready {
+  background-color: #e1f3d8;
+  color: #67c23a;
+}
+
+.ready-tag.not-ready {
+  background-color: #fde2e2;
+  color: #f56c6c;
+}
+
+.option-btn {
+  display: block;
+  width: 100%;
+  margin: 8px 0;
+  padding: 10px 14px;
+  text-align: left;
+  border-radius: 4px;
+  color: #333;
+  border: 1px solid #ddd;
+  background-color: #fff;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.option-btn:hover:not(:disabled) {
+  background-color: #f5f7fa;
+}
+
+.option-btn.selected {
+  border-color: #f9f04c;
+  background-color: #f3efd8;
+}
+
+.option-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 </style>
