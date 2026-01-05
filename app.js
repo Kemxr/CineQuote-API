@@ -8,6 +8,9 @@ import path from "path";
 import { fileURLToPath } from "url";
 import http from "http";
 import webpush from "web-push";
+import swaggerUi from "swagger-ui-express";
+import fs from "fs";
+import yaml from "js-yaml";
 
 import usersRouter from "./routes/users.js";
 import authRouter from "./routes/auth.js";
@@ -47,6 +50,27 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
 app.use(cookieParser());
+
+// Load and serve OpenAPI documentation
+try {
+  const openapiPath = path.join(__dirname, "openapi.yaml");
+  const openapiFile = fs.readFileSync(openapiPath, "utf8");
+  const openapiSpec = yaml.load(openapiFile);
+  
+  app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(openapiSpec, {
+    swaggerOptions: {
+      url: "/api-docs/openapi.yaml"
+    }
+  }));
+  
+  // Serve raw OpenAPI YAML file
+  app.get("/api-docs/openapi.yaml", (req, res) => {
+    res.type("application/yaml").send(openapiFile);
+  });
+} catch (err) {
+  console.warn("OpenAPI documentation not found or could not be loaded:", err.message);
+}
+
 app.use("/api/users", usersRouter);
 app.use("/api/auth", authRouter);
 app.use("/api/favorites", favoritesRouter);
