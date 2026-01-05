@@ -1,16 +1,18 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from "@jest/globals";
 import request from "supertest";
-import app from "../app.js";
-import { setupTestDB, teardownTestDB, clearTestDB } from "./setup.js";
+import app, {wsServer} from "../app.js";
+import { setupTestDB, teardownTestDB, clearTestDB, setupTestServer, teardownTestServer } from "./setup.js";
 import Film from "../models/film.js";
 
 describe("Films API", () => {
   beforeAll(async () => {
     await setupTestDB();
+    await setupTestServer(app, wsServer);
   });
 
   afterAll(async () => {
     await teardownTestDB();
+    await teardownTestServer();
   });
 
   beforeEach(async () => {
