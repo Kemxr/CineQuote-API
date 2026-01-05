@@ -1,7 +1,10 @@
 import mongoose from "mongoose";
 import { MongoMemoryServer } from "mongodb-memory-server";
+import http from "http";
 
 let mongoServer;
+let httpServer;
+let wsServerInstance;
 
 // Avant tous les tests
 export const setupTestDB = async () => {
@@ -34,4 +37,47 @@ export const clearTestDB = async () => {
   for (const key in collections) {
     await collections[key].deleteMany({});
   }
+};
+
+// Setup du serveur HTTP/WebSocket pour les tests
+export const setupTestServer = async (app, wsServer) => {
+  return new Promise((resolve) => {
+    httpServer = http.createServer(app);
+    
+    // Utiliser un port aléatoire pour éviter les conflits
+    httpServer.listen(0, () => {
+      const port = httpServer.address().port;
+      console.log(`Test server started on port ${port}`);
+      
+      // Démarrer le serveur WebSocket
+      wsServerInstance = wsServer;
+      wsServer.start({ server: httpServer });
+      
+      resolve(port);
+    });
+  });
+};
+
+// Fermeture du serveur HTTP/WebSocket
+export const teardownTestServer = async () => {
+  return new Promise((resolve) => {
+    // Fermer les connexions WebSocket
+    if (wsServerInstance && wsServerInstance.wss) {
+      wsServerInstance.wss.clients.forEach((client) => {
+        client.close();
+      });
+      wsServerInstance.wss.close();
+    }
+
+    // Fermer le serveur HTTP
+    if (httpServer) {
+      httpServer.close(() => {
+        console.log("Test server closed");
+        httpServer = null;
+        resolve();
+      });
+    } else {
+      resolve();
+    }
+  });
 };

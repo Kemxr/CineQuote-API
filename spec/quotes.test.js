@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from "@jest/globals";
 import request from "supertest";
 import jwt from "jsonwebtoken";
-import app from "../app.js";
-import { setupTestDB, teardownTestDB, clearTestDB } from "./setup.js";
+import app, {wsServer} from "../app.js";
+import { setupTestDB, teardownTestDB, clearTestDB, setupTestServer, teardownTestServer } from "./setup.js";
 import Quote from "../models/quote.js";
 import Film from "../models/film.js";
 import User from "../models/user.js";
@@ -23,10 +23,12 @@ describe("Quotes API", () => {
 
   beforeAll(async () => {
     await setupTestDB();
+    await setupTestServer(app, wsServer);
   });
 
   afterAll(async () => {
     await teardownTestDB();
+    await teardownTestServer();
   });
 
   beforeEach(async () => {

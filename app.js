@@ -21,7 +21,10 @@ const __dirname = path.dirname(__filename);
 
 dotenv.config();
 
-mongoose.connect(process.env.DATABASE_URL || "mongodb://localhost/cine-quote-api");
+// Ne connecter à MongoDB que si on n'est pas en environnement de test
+if (process.env.NODE_ENV !== "test") {
+  mongoose.connect(process.env.DATABASE_URL || "mongodb://localhost/cine-quote-api");
+}
 
 // Configure web-push with VAPID keys
 const VAPID_PUBLIC_KEY = process.env.VAPID_PUBLIC_KEY || "";
@@ -38,7 +41,6 @@ if (VAPID_PUBLIC_KEY && VAPID_PRIVATE_KEY) {
 const pushSubscriptions = [];
 
 const app = express();
-const httpServer = http.createServer(app);
 
 app.use(express.static(path.join(__dirname, "/frontend/cine-quote-frontend/dist")));
 
@@ -81,49 +83,53 @@ app.use(function (err, req, res, next) {
   res.send(err.message);
 });
 
-// Start HTTP server and WebSocket server
-const port = process.env.VITE_WS_PORT || 10000;
-httpServer.listen(port, () => console.log(`HTTP server listening on port ${port}`));
-wsServer.start({ server: httpServer });
+// Ne démarrer le serveur que si on n'est pas en environnement de test
+if (process.env.NODE_ENV !== "test") {
+  const httpServer = http.createServer(app);
+  const port = process.env.VITE_WS_PORT || 10000;
+  
+  httpServer.listen(port, () => console.log(`HTTP server listening on port ${port}`));
+  wsServer.start({ server: httpServer });
 
-// Periodic job to send a push notification every day at 00:00 (server local time)
-if (VAPID_PUBLIC_KEY && VAPID_PRIVATE_KEY) {
-  const sendDailyNotification = async () => {
-    if (!pushSubscriptions.length) return;
+  // Periodic job to send a push notification every day at 00:00
+  if (VAPID_PUBLIC_KEY && VAPID_PRIVATE_KEY) {
+    const sendDailyNotification = async () => {
+      if (!pushSubscriptions.length) return;
 
-    const payload = JSON.stringify({
-      title: "Nouvelle citation",
-      body: "Une nouvelle citation du jour est disponible.",
-    });
+      const payload = JSON.stringify({
+        title: "Nouvelle citation",
+        body: "Une nouvelle citation du jour est disponible.",
+      });
 
-    for (const sub of pushSubscriptions) {
-      try {
-        await webpush.sendNotification(sub, payload);
-      } catch (err) {
-        console.error("Error sending push notification", err);
+      for (const sub of pushSubscriptions) {
+        try {
+          await webpush.sendNotification(sub, payload);
+        } catch (err) {
+          console.error("Error sending push notification", err);
+        }
       }
-    }
-  };
+    };
 
-  const scheduleNextRun = () => {
-    const now = new Date();
-    const nextRun = new Date();
-    // Minuit
-    nextRun.setHours(0, 0, 0, 0);
+    const scheduleNextRun = () => {
+      const now = new Date();
+      const nextRun = new Date();
+      nextRun.setHours(0, 0, 0, 0);
 
-    if (now >= nextRun) {
-      nextRun.setDate(nextRun.getDate() + 1);
-    }
+      if (now >= nextRun) {
+        nextRun.setDate(nextRun.getDate() + 1);
+      }
 
-    const delay = nextRun.getTime() - now.getTime();
+      const delay = nextRun.getTime() - now.getTime();
 
-    setTimeout(async () => {
-      await sendDailyNotification();
-      setInterval(sendDailyNotification, 24 * 60 * 60 * 1000);
-    }, delay);
-  };
+      setTimeout(async () => {
+        await sendDailyNotification();
+        setInterval(sendDailyNotification, 24 * 60 * 60 * 1000);
+      }, delay);
+    };
 
-  scheduleNextRun();
+    scheduleNextRun();
+  }
 }
 
 export default app;
+export { wsServer };
