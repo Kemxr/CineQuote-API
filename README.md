@@ -2,102 +2,112 @@
 
 ## Présentation du Projet
 
-CineQuote est une application web qui permet aux utilisateurs de découvrir, partager et organiser des citations de films. L'application fonctionne selon une architecture client-serveur où :
+**CineQuote** est une application web permettant aux utilisateurs de découvrir, partager et organiser des citations de films. Le projet suit une architecture client-serveur :
 
-- **Le serveur (cette API)** gère les données : les utilisateurs, les films, les citations et les favoris
-- **Le client (application web)** communique avec le serveur pour afficher et modifier les données
+- **Serveur (cette API)** : Gère les données (utilisateurs, films, citations, favoris) et expose une API REST
+- **Client (application web)** : Interface utilisateur communiquant avec le serveur
 
-L'API REST fournit tous les services nécessaires pour créer des comptes utilisateurs, consulter les films et leurs citations, ajouter de nouvelles citations (pour les administrateurs), organiser les citations préférées, et recevoir des notifications push.
+L'API fournit les services nécessaires pour l'authentification, la consultation des films et citations, la gestion des favoris, et les notifications push. **La documentation complète de l'API est disponible via Swagger/OpenAPI** (voir section [Documentation de l'API](#documentation-de-lapi)).
 
 ## Technologies Utilisées
 
-### Backend
-- **Langage** : JavaScript (Node.js)
-- **Framework** : Express.js (version 5.1.0)
-- **Runtime** : Node.js
-
-### Base de Données
-- **MongoDB** (version 8.19.1) - Base de données NoSQL pour stocker les utilisateurs, films, citations et favoris
-
-### Authentification et Sécurité
-- **JWT (JSON Web Token)** - Pour l'authentification des utilisateurs
-- **bcrypt** - Pour le chiffrement sécurisé des mots de passe
-- **Cookies HTTP-only** - Pour le stockage sécurisé des jetons
-
-### Autres Technologies Importantes
-- **Socket.io** - Pour la communication en temps réel
-- **Web Push** - Pour les notifications push
-- **Mongoose** - ODM (Object Document Mapper) pour MongoDB
-- **Morgan** - Middleware de journalisation HTTP
-- **CORS** - Gestion des requêtes cross-origin
-
-### Outils de Développement
-- **Nodemon** - Redémarrage automatique du serveur en développement
-- **Jest** - Framework de test unitaire
-- **Concurrently** - Exécution simultanée de plusieurs commandes
+| Composant | Technologie | Rôle |
+|-----------|-------------|------|
+| **Runtime** | Node.js | Exécution du code JavaScript côté serveur |
+| **Framework** | Express.js 5.1.0 | Gestion des routes HTTP et middleware |
+| **Base de données** | MongoDB 8.19.1 | Stockage des données (NoSQL) |
+| **Authentification** | JWT + bcrypt | Sécurisation des comptes utilisateurs |
+| **Communication** | Socket.io | Temps réel (WebSocket) |
+| **Notifications** | Web Push | Notifications push côté client |
+| **Mapping BD** | Mongoose | Interface MongoDB en Node.js |
+| **Développement** | Nodemon | Redémarrage automatique en dev |
+| **Tests** | Jest | Tests unitaires |
 
 ## Prérequis
 
-Avant de commencer, assurez-vous que vous avez installé les logiciels suivants :
+Avant de commencer, installez les logiciels suivants :
 
-- **Node.js** (version 16.0.0 ou supérieure)
-- **npm** (version 7.0.0 ou supérieure, généralement inclus avec Node.js)
-- **MongoDB** (version 4.4 ou supérieure) - Soit installé localement, soit accessible via MongoDB Atlas (cloud)
+| Prérequis | Version | Raison |
+|-----------|---------|--------|
+| **Node.js** | ≥ 16.0.0 | Runtime JavaScript pour exécuter l'API |
+| **npm** | ≥ 7.0.0 | Gestionnaire de paquets (généralement inclus avec Node.js) |
+| **MongoDB** | ≥ 4.4 | Base de données pour stocker les données persistantes |
 
-### Vérification des Prérequis
+**MongoDB** peut être installé localement ou utilisé via [MongoDB Atlas](https://www.mongodb.com/cloud/atlas) (cloud gratuit).
 
-Pour vérifier que Node.js et npm sont correctement installés, exécutez :
+### Vérification de l'Installation
+
+Pour vérifier que les outils sont correctement installés :
 
 ```bash
-node --version
-npm --version
+node --version    # Doit afficher v16.0.0 ou supérieur
+npm --version     # Doit afficher 7.0.0 ou supérieur
 ```
 
 ## Installation
 
-### Étape 1 : Cloner le Projet
+### 1. Cloner le Projet
 
 ```bash
 git clone <URL_DU_REPOSITORY>
 cd CineQuote-API
 ```
 
-### Étape 2 : Installer les Dépendances
+Télécharge le code source du projet dans un dossier local.
+
+### 2. Installer les Dépendances
 
 ```bash
 npm install
 ```
 
-Cette commande installe toutes les dépendances listées dans le fichier `package.json`.
+Installe tous les paquets Node.js listés dans `package.json` (Express, MongoDB, JWT, etc.).
 
-### Étape 3 : Configurer les Variables d'Environnement
+### 3. Configurer les Variables d'Environnement
 
-Créez un fichier `.env` à la racine du projet avec les variables d'environnement nécessaires :
+Créez un fichier `.env` à la racine du projet :
+
+```bash
+cp .env.example .env  # Si un fichier .env.example existe
+# Sinon, créez manuellement un fichier .env
+```
+
+Remplissez le fichier `.env` avec les valeurs suivantes :
 
 ```env
+# Serveur
 PORT=3000
-JWT_SECRET=votre_clé_secrète_jwt
-SECRET_KEY=votre_clé_secrète_générale
-DATABASE_URL=mongodb+srv://utilisateur:motdepasse@cluster.mongodb.net/?retryWrites=true&w=majority
+BACKEND_PORT=8899
+
+# Authentification
+JWT_SECRET=votre_clé_secrète_jwt_aléatoire
 JWT_EXPIRES_IN=7d
+SECRET_KEY=votre_clé_secrète_générale
+
+# Base de données
+DATABASE_URL=mongodb+srv://utilisateur:motdepasse@cluster.mongodb.net/?retryWrites=true&w=majority
+
+# WebSocket
 VITE_WS_HOST=localhost
 VITE_WS_PORT=8899
-BACKEND_PORT=8899
+
+# Notifications push (optionnel)
 VAPID_PUBLIC_KEY=votre_clé_publique_vapid
 VAPID_PRIVATE_KEY=votre_clé_privée_vapid
 ```
 
-**Explications des variables :**
-- `PORT` : Port sur lequel le serveur HTTP écoute
-- `JWT_SECRET` : Clé secrète pour signer les jetons JWT (doit être une chaîne aléatoire sécurisée)
-- `SECRET_KEY` : Clé secrète générale pour l'application
-- `DATABASE_URL` : URL de connexion à MongoDB (local ou cloud)
-- `JWT_EXPIRES_IN` : Durée de vie des jetons JWT (ex: "7d" pour 7 jours)
-- `VITE_WS_HOST` et `VITE_WS_PORT` : Configuration du serveur WebSocket
-- `BACKEND_PORT` : Port du serveur backend
-- `VAPID_PUBLIC_KEY` et `VAPID_PRIVATE_KEY` : Clés pour les notifications push (optionnel)
+**Explication des variables principales :**
 
-### Étape 4 : Initialiser la Base de Données (Optionnel)
+| Variable | Description |
+|----------|-------------|
+| `PORT` | Port HTTP du serveur (défaut: 3000) |
+| `JWT_SECRET` | Clé secrète pour signer les jetons JWT (doit être aléatoire et sécurisée) |
+| `DATABASE_URL` | URL de connexion MongoDB (local ou MongoDB Atlas) |
+| `JWT_EXPIRES_IN` | Durée de vie des jetons (ex: "7d" = 7 jours) |
+
+**⚠️ Important** : Ne commitez jamais le fichier `.env` (il contient des secrets). Il est déjà dans `.gitignore`.
+
+### 4. Initialiser la Base de Données (Optionnel)
 
 Pour remplir la base de données avec des données de test :
 
@@ -113,244 +123,218 @@ npm run clear
 
 ## Lancement du Projet
 
-### Mode Développement
-
-Pour lancer le serveur et le client en mode développement :
+### Mode Développement (Recommandé)
 
 ```bash
 npm run dev
 ```
 
-Cette commande démarre simultanément :
-- Le serveur backend sur le port spécifié dans `.env` (par défaut 3000)
-- Le client frontend (application web)
+Démarre simultanément le serveur backend et le client frontend. Le serveur redémarre automatiquement lors de modifications de fichiers (grâce à Nodemon).
 
-Le serveur redémarrera automatiquement chaque fois que vous modifiez un fichier (grâce à Nodemon).
+**Accès :**
+- API : `http://localhost:3000/api`
+- Swagger UI : `http://localhost:10000/api-docs`
+- Frontend : `http://localhost:5173` (ou port configuré)
 
 ### Mode Production
-
-Pour lancer le projet en mode production :
 
 ```bash
 npm start
 ```
 
-### Lancement du Serveur Uniquement
+Lance le projet en mode production optimisé.
 
-Si vous souhaitez lancer uniquement le serveur backend :
-
-```bash
-npm run dev:server
-```
-
-### Lancement du Client Uniquement
-
-Si vous souhaitez lancer uniquement le client frontend :
+### Lancement Sélectif
 
 ```bash
-npm run dev:client
+npm run dev:server    # Serveur backend uniquement
+npm run dev:client    # Client frontend uniquement
 ```
 
 ### Tests
 
-Pour exécuter les tests unitaires :
-
 ```bash
-npm test
-```
-
-Pour générer un rapport de couverture de test :
-
-```bash
-npm run test:coverage
+npm test              # Exécute les tests unitaires
+npm run test:coverage # Génère un rapport de couverture
 ```
 
 ## Documentation de l'API
 
-La documentation complète et détaillée de l'API est disponible via **Swagger UI**, une interface interactive qui liste tous les endpoints, paramètres, schémas et codes d'erreur.
+La documentation complète de l'API est disponible via **Swagger UI**, une interface interactive. Le fichier source est `openapi.yaml` (spécification OpenAPI 3.0).
 
-### Accès à la Documentation Swagger
+### Accès à Swagger UI
 
-Une fois le serveur lancé, accédez à la documentation Swagger à l'adresse suivante :
+Une fois le serveur lancé (`npm run dev`), ouvrez :
 
 ```
 http://localhost:10000/api-docs
 ```
 
-### Contenu de la Documentation Swagger
-
-La documentation Swagger inclut :
-
-- **Liste complète des 25 endpoints** organisés par catégorie (Authentification, Utilisateurs, Films, Citations, Favoris, Notifications)
-- **Détails de chaque endpoint** : méthode HTTP, chemin, paramètres requis et optionnels
-- **Schémas de requête et réponse** : structure exacte des données attendues et retournées
-- **Codes d'erreur** : tous les codes HTTP possibles (200, 201, 400, 401, 403, 404, 500) avec explications
-- **Exemples pratiques** : exemples de requêtes et réponses pour chaque endpoint
+Swagger UI affiche :
+- **25 endpoints** organisés par catégorie (Authentification, Utilisateurs, Films, Citations, Favoris, Notifications)
+- **Détails complets** : méthode HTTP, paramètres, schémas de requête/réponse
+- **Codes d'erreur** : 200, 201, 400, 401, 403, 404, 500 avec explications
+- **Exemples pratiques** : requêtes et réponses réalistes pour chaque endpoint
 - **Authentification** : explication du système JWT et des niveaux d'accès
 
 ### Fichier OpenAPI YAML
 
-Le fichier de spécification OpenAPI brut est également disponible à :
+Le fichier de spécification brut est accessible à :
 
 ```
 http://localhost:10000/api-docs/openapi.yaml
 ```
 
-Ce fichier peut être utilisé avec d'autres outils Swagger ou OpenAPI.
+Peut être utilisé avec d'autres outils OpenAPI/Swagger.
 
 ## Utilisation de l'API (Vue d'Ensemble)
 
-### Architecture Client-Serveur
+### Modèle REST
 
-L'API fonctionne selon un modèle REST standard où :
+L'API suit le modèle REST standard :
 
-1. **Le client** (navigateur web ou application mobile) envoie une **requête HTTP** au serveur
-2. **Le serveur** traite la requête, accède à la base de données si nécessaire, et envoie une **réponse HTTP**
-3. **Les données** sont échangées au format **JSON**
+1. **Client** envoie une requête HTTP (GET, POST, PATCH, DELETE)
+2. **Serveur** traite la requête et accède à la base de données si nécessaire
+3. **Réponse** retournée au format JSON avec un code de statut HTTP
 
-### Flux Typique d'Utilisation
+### Flux Typique
 
-#### 1. Authentification
-L'utilisateur doit d'abord créer un compte ou se connecter :
-- Créer un compte : envoyer un nom, email et mot de passe
-- Se connecter : envoyer l'email et le mot de passe
-- Recevoir un jeton JWT stocké dans un cookie sécurisé
+| Étape | Action | Authentification |
+|-------|--------|------------------|
+| **1. Inscription/Connexion** | Créer un compte ou se connecter | Non requise |
+| **2. Consultation** | Consulter films et citations | Non requise |
+| **3. Favoris** | Ajouter/retirer des citations favorites | JWT requis |
+| **4. Administration** | Créer/modifier/supprimer contenu | JWT + rôle admin |
 
-#### 2. Consultation des Données
-L'utilisateur peut consulter les films et citations sans authentification :
-- Récupérer la liste des films
-- Récupérer les citations d'un film spécifique
-- Obtenir une citation aléatoire
+### Authentification JWT
 
-#### 3. Gestion des Favoris
-L'utilisateur authentifié peut gérer sa liste de citations préférées :
-- Ajouter une citation aux favoris
-- Consulter ses favoris
-- Retirer une citation des favoris
-
-#### 4. Administration (Administrateurs Uniquement)
-Les administrateurs peuvent gérer le contenu :
-- Créer, modifier ou supprimer des films
-- Créer, modifier ou supprimer des citations
-- Consulter la liste de tous les utilisateurs
-
-### Authentification
-
-L'API utilise **JWT (JSON Web Token)** pour l'authentification :
-- Les jetons sont créés lors de la connexion
-- Ils sont stockés dans un cookie HTTP-only sécurisé
-- Ils expirent après 7 jours par défaut
-- Chaque requête protégée vérifie la validité du jeton
+L'API utilise **JWT (JSON Web Token)** :
+- Jeton créé lors de la connexion
+- Stocké dans un cookie HTTP-only sécurisé
+- Expire après 7 jours (configurable via `JWT_EXPIRES_IN`)
+- Automatiquement validé pour chaque requête protégée
 
 ### Niveaux d'Accès
 
-L'API propose trois niveaux d'accès :
-- **Public** : Aucune authentification requise (consultation des films et citations)
-- **Authentifié** : Nécessite un jeton JWT valide (gestion des favoris, profil)
-- **Admin** : Nécessite un jeton JWT ET le rôle administrateur (gestion du contenu)
+| Niveau | Accès | Exemples |
+|--------|-------|----------|
+| **Public** | Aucune authentification | Consulter films, citations, profils publics |
+| **Authentifié** | JWT valide | Gérer favoris, consulter profil personnel |
+| **Admin** | JWT + rôle admin | Créer/modifier/supprimer films et citations |
 
-### Pour Plus de Détails
+### Documentation Complète
 
-**Consultez la documentation Swagger** pour :
-- La liste complète de tous les endpoints
-- Les paramètres exacts de chaque endpoint
-- Les structures de données détaillées
-- Les codes d'erreur spécifiques
-- Les exemples de requêtes et réponses
+Pour tous les détails techniques, consultez **Swagger UI** :
+- URL : `http://localhost:10000/api-docs`
+- Contient tous les endpoints, paramètres, schémas et exemples
 
-Accédez à : `http://localhost:10000/api-docs`
+## Notes pour l'Évaluation
 
-## Remarques pour l'Évaluation
+### Documentation de l'API
 
-### Source Unique de Documentation de l'API
+**Swagger/OpenAPI 3.0 est la source unique et officielle de documentation de l'API.**
 
-**Swagger/OpenAPI est la source unique et officielle de documentation de l'API.**
+- **Fichier source** : `openapi.yaml` (spécification OpenAPI 3.0 complète)
+- **Interface interactive** : Swagger UI à `http://localhost:10000/api-docs`
+- **Aucune autre documentation API en Markdown** n'est nécessaire
 
-- Tous les endpoints sont documentés dans le fichier `openapi.yaml`
-- La documentation Swagger UI est accessible à `http://localhost:10000/api-docs`
-- Aucune autre documentation API en Markdown n'est nécessaire
+### Choix de Documentation
 
-### Fichiers de Documentation
+| Composant | Fichier | Rôle |
+|-----------|---------|------|
+| **Vue d'ensemble** | `README.md` | Guide de démarrage et architecture générale |
+| **Spécification API** | `openapi.yaml` | Documentation technique complète (25 endpoints) |
+| **Interface interactive** | Swagger UI | Exploration et test des endpoints |
 
-Le projet contient les fichiers de documentation suivants :
+### Complétude de la Documentation
 
-- **`README.md`** (ce fichier) : Vue d'ensemble du projet et guide de démarrage
-- **`openapi.yaml`** : Spécification complète de l'API au format OpenAPI 3.0
-- **Swagger UI** : Interface interactive pour explorer l'API
+✅ **25 endpoints** documentés avec exemples  
+✅ **Tous les paramètres** (path, query, body) expliqués  
+✅ **Tous les schémas** (User, Film, Quote, etc.) définis  
+✅ **Tous les codes d'erreur** (200, 201, 400, 401, 403, 404, 500)  
+✅ **Authentification JWT** expliquée avec niveaux d'accès  
+✅ **Exemples pratiques** pour chaque endpoint  
+✅ **Contenu en français** pour accessibilité académique
 
-### Vérification de la Complétude
+### Principes de Documentation
 
-La documentation Swagger inclut :
-- ✅ 25 endpoints documentés et vérifiés
-- ✅ Tous les paramètres et schémas
-- ✅ Tous les codes d'erreur possibles
-- ✅ Exemples pratiques pour chaque endpoint
-- ✅ Explications en français pour les non-experts
+1. **Clarté** : Explications en français simple, sans jargon inutile
+2. **Complétude** : Tous les endpoints et paramètres documentés
+3. **Accessibilité** : Swagger UI permet exploration interactive sans lire le YAML
+4. **Maintenabilité** : OpenAPI comme source unique évite duplication
+5. **Académique** : Adapté pour évaluation et compréhension pédagogique
 
 ## Structure du Projet
 
 ```
 CineQuote-API/
-├── bin/                          # Point d'entrée de l'application
-├── controllers/                  # Logique métier des endpoints
-│   ├── authController.js
-│   ├── userController.js
-│   ├── filmController.js
-│   ├── quoteController.js
-│   └── favoriteController.js
-├── routes/                       # Définition des endpoints
+├── bin/                    # Point d'entrée de l'application
+├── controllers/            # Logique métier (traitement des requêtes)
+│   ├── authController.js   # Inscription, connexion, profil
+│   ├── userController.js   # Gestion des utilisateurs
+│   ├── filmController.js   # Gestion des films
+│   ├── quoteController.js  # Gestion des citations
+│   └── favoriteController.js # Gestion des favoris
+├── routes/                 # Définition des endpoints HTTP
 │   ├── auth.js
 │   ├── users.js
 │   ├── films.js
 │   ├── quotes.js
 │   └── favorites.js
-├── models/                       # Schémas MongoDB
+├── models/                 # Schémas MongoDB (structure des données)
 │   ├── user.js
 │   ├── film.js
 │   └── quote.js
-├── middlewares/                  # Middleware Express
+├── middlewares/            # Middleware Express (authentification, validation)
 │   ├── authMiddleware.js
 │   └── userMiddleware.js
-├── frontend/                     # Application web client
-├── app.js                        # Configuration Express principale
-├── config.js                     # Configuration de l'application
-├── openapi.yaml                  # Spécification OpenAPI 3.0
-├── package.json                  # Dépendances et scripts
-├── .env                          # Variables d'environnement (non versionné)
-└── README.md                     # Ce fichier
+├── frontend/               # Application web client (React/Vue)
+├── app.js                  # Configuration Express principale
+├── config.js               # Configuration (variables d'environnement)
+├── openapi.yaml            # Spécification OpenAPI 3.0 (documentation API)
+├── package.json            # Dépendances et scripts npm
+├── .env                    # Variables d'environnement (non versionné)
+└── README.md               # Ce fichier
 ```
 
 ## Dépannage
 
 ### Le serveur ne démarre pas
 
-**Vérifiez :**
-- Que Node.js est correctement installé : `node --version`
-- Que MongoDB est accessible (local ou cloud)
-- Que le fichier `.env` est présent et correctement configuré
-- Que le port spécifié dans `.env` n'est pas déjà utilisé
+**Causes possibles et solutions :**
 
-### Erreur de connexion à MongoDB
+| Problème | Solution |
+|----------|----------|
+| Node.js non installé | Vérifiez : `node --version` |
+| MongoDB inaccessible | Lancez MongoDB localement ou vérifiez la connexion cloud |
+| Fichier `.env` manquant | Créez `.env` avec les variables requises |
+| Port déjà utilisé | Changez `PORT` dans `.env` ou libérez le port |
+| Dépendances manquantes | Exécutez `npm install` |
 
-**Vérifiez :**
-- Que MongoDB est en cours d'exécution (si installation locale)
-- Que la variable `DATABASE_URL` dans `.env` est correcte
-- Que vos identifiants MongoDB sont valides (si MongoDB Atlas)
-- Que votre adresse IP est autorisée dans MongoDB Atlas (si cloud)
+### Erreur de Connexion à MongoDB
 
-### Swagger UI n'est pas accessible
+**Vérifications :**
+- MongoDB est-il en cours d'exécution ? (local : `mongod`, cloud : vérifiez MongoDB Atlas)
+- `DATABASE_URL` est-elle correcte dans `.env` ?
+- Les identifiants MongoDB sont-ils valides ?
+- Votre adresse IP est-elle autorisée dans MongoDB Atlas (si cloud) ?
 
-**Vérifiez :**
-- Que le serveur est lancé : `npm run dev` ou `npm start`
-- Que vous accédez à la bonne URL : `http://localhost:10000/api-docs`
-- Que le port 10000 est correct (vérifiez dans `.env`)
+### Swagger UI n'est pas Accessible
 
-## Support et Ressources
+**Vérifications :**
+- Le serveur est-il lancé ? (`npm run dev`)
+- L'URL est-elle correcte ? (`http://localhost:10000/api-docs`)
+- Le port 10000 correspond-il à votre configuration ?
 
-- **Documentation OpenAPI** : https://spec.openapis.org/oas/v3.0.3
-- **Express.js** : https://expressjs.com/
-- **MongoDB** : https://docs.mongodb.com/
-- **JWT** : https://jwt.io/
+## Ressources Utiles
+
+| Ressource | Lien |
+|-----------|------|
+| **OpenAPI 3.0** | https://spec.openapis.org/oas/v3.0.3 |
+| **Express.js** | https://expressjs.com/ |
+| **MongoDB** | https://docs.mongodb.com/ |
+| **JWT** | https://jwt.io/ |
+| **Swagger UI** | https://swagger.io/tools/swagger-ui/ |
 
 ## Licence
 
@@ -359,4 +343,5 @@ Ce projet est fourni à titre académique.
 ---
 
 **Dernière mise à jour** : Janvier 2026  
-**Version** : 0.1.0
+**Version** : 0.1.0  
+**Auteur** : Équipe CineQuote
