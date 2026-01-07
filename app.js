@@ -69,6 +69,7 @@ try {
   app.get("/api-docs/openapi.yaml", (req, res) => {
     res.type("application/yaml").send(openapiFile);
   });
+  console.warn("OpenAPI loaded");
 } catch (err) {
   console.warn("OpenAPI documentation not found or could not be loaded:", err.message);
 }

@@ -18,7 +18,7 @@ info:
     name: MIT
 
 servers:
-  - url: http://localhost:10000/api
+  - url: http://localhost:10000/
     description: Serveur de développement local
   - url: http://localhost:8899/api
     description: Serveur WebSocket alternatif
@@ -112,7 +112,7 @@ components:
           example: "Christopher Nolan"
         genre:
           type: string
-          description: Genre principal du film (ex: Science-Fiction, Drame, Comédie)
+          description: "Genre principal du film (ex: Science-Fiction, Drame, Comédie)"
           example: "Science-Fiction"
         image:
           type: string
@@ -140,7 +140,7 @@ components:
           example: "Que la Force soit avec toi."
         emotion:
           type: string
-          description: Émotion ou sentiment associé à la citation (ex: inspiring, romantic, funny, dramatic)
+          description: "Émotion ou sentiment associé à la citation (ex: inspiring, romantic, funny, dramatic)"
           example: "inspiring"
         film:
           type: string
@@ -915,7 +915,7 @@ paths:
         - name: emotion
           in: query
           required: false
-          description: Filtrer les citations par émotion (recherche exacte, ex: "inspiring", "romantic", "funny")
+          description: "Filtrer les citations par émotion (recherche exacte, ex: \"inspiring\", \"romantic\", \"funny\")"
           schema:
             type: string
           example: "inspiring"
@@ -974,7 +974,7 @@ paths:
                   description: Texte exact de la citation du film
                 emotion:
                   type: string
-                  description: Émotion ou sentiment associé (ex: inspiring, romantic, funny, dramatic)
+                  description: "Émotion ou sentiment associé (ex: inspiring, romantic, funny, dramatic)"
                 film:
                   type: string
                   format: ObjectId

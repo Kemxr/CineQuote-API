@@ -20,11 +20,13 @@
     "debug": "^4.4.1",
     "express": "^5.1.0",
     "http-errors": "^2.0.0",
+    "js-yaml": "^4.1.1",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.19.1",
     "morgan": "^1.10.1",
     "node-fetch": "^3.3.2",
     "socket.io": "^4.8.1",
+    "swagger-ui-express": "^5.0.1",
     "web-push": "^3.6.7",
     "wsmini": "^1.2.0"
   },
