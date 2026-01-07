@@ -1,0 +1,1315 @@
+openapi: 3.0.0
+info:
+  title: API CineQuote
+  description: |
+    API REST pour l'application CineQuote - une plateforme de découverte, partage et organisation de citations de films.
+    
+    Cette API permet de :
+    - Créer et gérer des comptes utilisateurs
+    - Consulter les films et leurs citations
+    - Ajouter et gérer des citations (administrateurs)
+    - Organiser les citations préférées
+    - S'abonner aux notifications push
+  version: 0.1.0
+  contact:
+    name: Support CineQuote
+    email: support@cinequote.local
+  license:
+    name: MIT
+
+servers:
+  - url: http://localhost:10000/api
+    description: Serveur de développement local
+  - url: http://localhost:8899/api
+    description: Serveur WebSocket alternatif
+
+tags:
+  - name: Authentification
+    description: Endpoints pour l'inscription, connexion et gestion de session
+  - name: Utilisateurs
+    description: Endpoints pour la gestion des utilisateurs
+  - name: Films
+    description: Endpoints pour consulter et gérer les films
+  - name: Citations
+    description: Endpoints pour consulter et gérer les citations
+  - name: Favoris
+    description: Endpoints pour gérer les citations favorites
+  - name: Notifications
+    description: Endpoints pour les notifications push
+
+components:
+  schemas:
+    User:
+      type: object
+      description: Représente un utilisateur enregistré dans le système. Les utilisateurs peuvent consulter les films et citations, gérer leurs favoris, et les administrateurs peuvent gérer le contenu.
+      properties:
+        _id:
+          type: string
+          format: ObjectId
+          description: Identifiant unique MongoDB généré automatiquement
+          example: "507f1f77bcf86cd799439011"
+        name:
+          type: string
+          description: Nom complet de l'utilisateur (minimum 2 caractères)
+          minLength: 2
+          example: "Jean Dupont"
+        email:
+          type: string
+          format: email
+          description: Adresse email unique utilisée pour l'authentification
+          example: "jean@example.com"
+        password:
+          type: string
+          format: password
+          description: Mot de passe chiffré avec bcrypt. Jamais renvoyé par l'API dans les réponses.
+        role:
+          type: string
+          enum: [user, admin]
+          description: "Rôle de l'utilisateur: 'user' pour utilisateur standard, 'admin' pour administrateur avec accès aux fonctions de gestion"
+          example: "user"
+        favorites:
+          type: array
+          items:
+            type: string
+            format: ObjectId
+          description: Liste des identifiants des citations marquées comme favorites par cet utilisateur
+          example: ["507f1f77bcf86cd799439012", "507f1f77bcf86cd799439013"]
+        createdAt:
+          type: string
+          format: date-time
+          description: Date et heure de création du compte au format ISO 8601
+          example: "2024-01-15T10:30:00.000Z"
+        updatedAt:
+          type: string
+          format: date-time
+          description: Date et heure de la dernière modification du profil au format ISO 8601
+          example: "2024-01-20T14:45:00.000Z"
+      required:
+        - name
+        - email
+        - password
+
+    Film:
+      type: object
+      description: Représente un film dans la base de données. Les films peuvent avoir plusieurs citations associées.
+      properties:
+        _id:
+          type: string
+          format: ObjectId
+          description: Identifiant unique MongoDB généré automatiquement
+          example: "507f1f77bcf86cd799439016"
+        title:
+          type: string
+          description: Titre complet du film
+          example: "Inception"
+        year:
+          type: integer
+          description: Année de sortie du film
+          example: 2010
+        director:
+          type: string
+          description: Nom du réalisateur ou des réalisateurs
+          example: "Christopher Nolan"
+        genre:
+          type: string
+          description: Genre principal du film (ex: Science-Fiction, Drame, Comédie)
+          example: "Science-Fiction"
+        image:
+          type: string
+          format: uri
+          description: URL de l'affiche du film (optionnel). Doit être une URL valide.
+          example: "https://example.com/inception.jpg"
+      required:
+        - title
+        - year
+        - director
+        - genre
+
+    Quote:
+      type: object
+      description: Représente une citation d'un film. Les citations sont associées à un film spécifique et peuvent être marquées comme favorites par les utilisateurs.
+      properties:
+        _id:
+          type: string
+          format: ObjectId
+          description: Identifiant unique MongoDB généré automatiquement
+          example: "507f1f77bcf86cd799439012"
+        text:
+          type: string
+          description: Texte exact de la citation du film
+          example: "Que la Force soit avec toi."
+        emotion:
+          type: string
+          description: Émotion ou sentiment associé à la citation (ex: inspiring, romantic, funny, dramatic)
+          example: "inspiring"
+        film:
+          type: string
+          format: ObjectId
+          description: Identifiant du film auquel appartient cette citation
+          example: "507f1f77bcf86cd799439016"
+      required:
+        - text
+        - emotion
+        - film
+
+    ErrorResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          description: Message d'erreur descriptif
+      required:
+        - message
+
+    PaginatedQuotes:
+      type: object
+      description: Réponse paginée contenant une liste de citations. Utilisée pour les résultats de recherche et de filtrage.
+      properties:
+        page:
+          type: integer
+          description: Numéro de la page actuelle (commence à 1)
+          example: 1
+        limit:
+          type: integer
+          description: Nombre de résultats par page (0 = pas de limite)
+          example: 10
+        total:
+          type: integer
+          description: Nombre total de citations correspondant aux critères de filtrage
+          example: 45
+        totalPages:
+          type: integer
+          description: Nombre total de pages disponibles
+          example: 5
+        items:
+          type: array
+          description: Liste des citations pour cette page
+          items:
+            $ref: '#/components/schemas/Quote'
+      required:
+        - page
+        - limit
+        - total
+        - totalPages
+        - items
+
+    TopFilm:
+      type: object
+      description: Résultat d'agrégation contenant un film et le nombre de citations associées. Utilisé pour le classement des films les plus cités.
+      properties:
+        _id:
+          type: string
+          format: ObjectId
+          description: Identifiant du film (redondant avec film._id)
+          example: "507f1f77bcf86cd799439016"
+        count:
+          type: integer
+          description: Nombre total de citations associées à ce film
+          example: 15
+        film:
+          $ref: '#/components/schemas/Film'
+          description: Objet Film complet avec tous les détails
+      required:
+        - _id
+        - count
+        - film
+
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: auth_token
+      description: Authentification par JWT (JSON Web Token) stocké dans un cookie HTTP-only sécurisé. Le jeton est automatiquement envoyé avec chaque requête et valide pendant 7 jours.
+
+  responses:
+    UnauthorizedError:
+      description: Non authentifié. Le jeton JWT est manquant, invalide ou expiré. Vous devez vous connecter pour accéder à cette ressource.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            message: "Non autorisé, pas de token"
+
+    ForbiddenError:
+      description: Accès refusé. Vous n'avez pas les permissions nécessaires pour effectuer cette action. Seuls les administrateurs peuvent accéder à cette ressource.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            message: "Accès réservé à l'administrateur"
+
+    NotFoundError:
+      description: Ressource non trouvée. L'identifiant fourni ne correspond à aucune ressource existante dans la base de données.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            message: "Ressource non trouvée"
+
+    BadRequestError:
+      description: Requête invalide. Les données envoyées ne respectent pas le format attendu ou contiennent des valeurs invalides.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            message: "Données invalides"
+
+    InternalServerError:
+      description: Erreur serveur interne. Une erreur inattendue s'est produite sur le serveur. Veuillez réessayer ultérieurement.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            message: "Erreur serveur"
+
+paths:
+  /auth/register:
+    post:
+      tags:
+        - Authentification
+      summary: S'inscrire
+      description: Crée un nouveau compte utilisateur. Fournissez un nom, une adresse email unique et un mot de passe sécurisé pour vous inscrire.
+      operationId: registerUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  minLength: 2
+                  description: Nom complet (minimum 2 caractères)
+                email:
+                  type: string
+                  format: email
+                  description: Adresse email unique
+                password:
+                  type: string
+                  minLength: 6
+                  description: Mot de passe (minimum 6 caractères)
+              required:
+                - name
+                - email
+                - password
+            example:
+              name: "Jean Dupont"
+              email: "jean@example.com"
+              password: "motDePasse123"
+      responses:
+        '201':
+          description: Utilisateur enregistré avec succès
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  _id:
+                    type: string
+                    format: ObjectId
+                  name:
+                    type: string
+                  email:
+                    type: string
+                  role:
+                    type: string
+                    enum: [user, admin]
+              example:
+                _id: "507f1f77bcf86cd799439011"
+                name: "Jean Dupont"
+                email: "jean@example.com"
+                role: "user"
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /auth/login:
+    post:
+      tags:
+        - Authentification
+      summary: Se connecter
+      description: Authentifie un utilisateur avec son email et son mot de passe. Un jeton JWT est créé et stocké automatiquement dans un cookie sécurisé.
+      operationId: loginUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  format: email
+                  description: Adresse email enregistrée
+                password:
+                  type: string
+                  description: Mot de passe correct
+                rememberMe:
+                  type: boolean
+                  default: false
+                  description: Si vrai, prolonge la durée de la session
+              required:
+                - email
+                - password
+            example:
+              email: "jean@example.com"
+              password: "motDePasse123"
+              rememberMe: false
+      responses:
+        '200':
+          description: Connexion réussie
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+                example: "auth_token=eyJhbGc...; Path=/; HttpOnly; Secure; SameSite=Strict"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  _id:
+                    type: string
+                    format: ObjectId
+                  name:
+                    type: string
+                  email:
+                    type: string
+                  role:
+                    type: string
+                  token:
+                    type: string
+                    description: JWT pour utilisation directe si nécessaire
+              example:
+                _id: "507f1f77bcf86cd799439011"
+                name: "Jean Dupont"
+                email: "jean@example.com"
+                role: "user"
+                token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        '400':
+          description: Identifiants incorrects
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                message: "Email ou mot de passe incorrect"
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /auth/logout:
+    post:
+      tags:
+        - Authentification
+      summary: Se déconnecter
+      description: Termine la session de l'utilisateur en supprimant le jeton JWT du cookie. Après cette action, vous devrez vous reconnecter pour accéder aux ressources protégées.
+      operationId: logoutUser
+      responses:
+        '200':
+          description: Déconnexion réussie
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+                example: "auth_token=; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=0"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                message: "Déconnecté"
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /auth/profile:
+    get:
+      tags:
+        - Authentification
+      summary: Obtenir le profil utilisateur
+      description: Récupère les informations complètes du compte de l'utilisateur actuellement connecté. Cette ressource est protégée et nécessite une authentification valide.
+      operationId: getUserProfile
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Profil récupéré avec succès
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  _id:
+                    type: string
+                    format: ObjectId
+                  name:
+                    type: string
+                  email:
+                    type: string
+                  role:
+                    type: string
+                  createdAt:
+                    type: string
+                    format: date-time
+              example:
+                _id: "507f1f77bcf86cd799439011"
+                name: "Jean Dupont"
+                email: "jean@example.com"
+                role: "user"
+                createdAt: "2024-01-15T10:30:00.000Z"
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /users:
+    get:
+      tags:
+        - Utilisateurs
+      summary: Obtenir tous les utilisateurs
+      description: Liste tous les utilisateurs enregistrés dans le système. Cette ressource est réservée aux administrateurs uniquement.
+      operationId: getAllUsers
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Liste complète de tous les utilisateurs enregistrés (administrateurs uniquement)
+          content:
+            application/json:
+              schema:
+                type: array
+                description: Tableau de tous les utilisateurs avec leurs détails complets
+                items:
+                  $ref: '#/components/schemas/User'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /users/{id}:
+    get:
+      tags:
+        - Utilisateurs
+      summary: Obtenir un utilisateur par ID
+      description: Récupère les informations complètes d'un utilisateur spécifique en utilisant son identifiant unique. Cette ressource est publique et ne nécessite pas d'authentification.
+      operationId: getUserById
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Identifiant MongoDB unique de l'utilisateur (format ObjectId)
+          schema:
+            type: string
+            format: ObjectId
+          example: "507f1f77bcf86cd799439011"
+      responses:
+        '200':
+          description: Utilisateur trouvé
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    patch:
+      tags:
+        - Utilisateurs
+      summary: Mettre à jour un utilisateur
+      description: Modifie le nom ou l'email d'un utilisateur existant. Vous pouvez mettre à jour un ou plusieurs champs optionnels.
+      operationId: updateUser
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Identifiant MongoDB unique de l'utilisateur (format ObjectId)
+          schema:
+            type: string
+            format: ObjectId
+          example: "507f1f77bcf86cd799439011"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  minLength: 2
+                  description: Nouveau nom complet (optionnel, minimum 2 caractères)
+                email:
+                  type: string
+                  format: email
+                  description: Nouvelle adresse email (optionnel, doit être unique et valide)
+            example:
+              name: "Jeanne Dupont"
+              email: "jeanne@example.com"
+      responses:
+        '200':
+          description: Utilisateur mis à jour
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    delete:
+      tags:
+        - Utilisateurs
+      summary: Supprimer un utilisateur
+      description: Supprime définitivement un compte utilisateur et toutes ses données associées de la base de données.
+      operationId: deleteUser
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Identifiant MongoDB unique de l'utilisateur (format ObjectId)
+          schema:
+            type: string
+            format: ObjectId
+          example: "507f1f77bcf86cd799439011"
+      responses:
+        '200':
+          description: Utilisateur supprimé
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                message: "Deleted user"
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /films:
+    get:
+      tags:
+        - Films
+      summary: Obtenir tous les films
+      description: Récupère la liste complète de tous les films disponibles dans la base de données. Cette ressource est publique et ne nécessite pas d'authentification.
+      operationId: getFilms
+      responses:
+        '200':
+          description: Liste complète de tous les films disponibles
+          content:
+            application/json:
+              schema:
+                type: array
+                description: Tableau de tous les films
+                items:
+                  $ref: '#/components/schemas/Film'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    post:
+      tags:
+        - Films
+      summary: Créer un film
+      description: Ajoute un nouveau film à la base de données. Seuls les administrateurs peuvent créer des films.
+      operationId: createFilm
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                  description: Titre complet du film
+                year:
+                  type: integer
+                  description: Année de sortie du film
+                director:
+                  type: string
+                  description: Nom du réalisateur ou des réalisateurs
+                genre:
+                  type: string
+                  description: Genre principal du film
+                image:
+                  type: string
+                  format: uri
+                  description: URL de l'affiche du film (optionnel, doit être une URL valide)
+              required:
+                - title
+                - year
+                - director
+                - genre
+            example:
+              title: "Inception"
+              year: 2010
+              director: "Christopher Nolan"
+              genre: "Science-Fiction"
+              image: "https://example.com/inception.jpg"
+      responses:
+        '201':
+          description: Film créé
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Film'
+        '400':
+          description: Données manquantes
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                message: "Tous les champs requis doivent être remplis"
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /films/top:
+    get:
+      tags:
+        - Films
+      summary: Obtenir les films les plus cités
+      description: Récupère les films ayant le plus de citations associées, classés par ordre décroissant. Cet endpoint est utile pour découvrir les films les plus populaires sur la plateforme.
+      operationId: getTopFilms
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          description: Nombre maximum de films à retourner, classés par nombre de citations décroissant
+          schema:
+            type: integer
+            default: 10
+            minimum: 1
+          example: 5
+      responses:
+        '200':
+          description: Liste des films les plus cités, classés par nombre de citations décroissant
+          content:
+            application/json:
+              schema:
+                type: array
+                description: Tableau des films avec leurs comptes de citations
+                items:
+                  $ref: '#/components/schemas/TopFilm'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /films/{id}:
+    get:
+      tags:
+        - Films
+      summary: Obtenir un film par ID
+      description: Récupère les détails complets d'un film spécifique en utilisant son identifiant unique. Cette ressource est publique et ne nécessite pas d'authentification.
+      operationId: getFilmById
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Identifiant MongoDB unique du film (format ObjectId)
+          schema:
+            type: string
+            format: ObjectId
+          example: "507f1f77bcf86cd799439016"
+      responses:
+        '200':
+          description: Film trouvé
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Film'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    put:
+      tags:
+        - Films
+      summary: Mettre à jour un film
+      description: Modifie les informations d'un film existant. Seuls les administrateurs peuvent modifier les films.
+      operationId: updateFilm
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Identifiant MongoDB unique du film (format ObjectId)
+          schema:
+            type: string
+            format: ObjectId
+          example: "507f1f77bcf86cd799439016"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                year:
+                  type: integer
+                director:
+                  type: string
+                genre:
+                  type: string
+                image:
+                  type: string
+                  format: uri
+            example:
+              title: "Inception - Director's Cut"
+      responses:
+        '200':
+          description: Film mis à jour
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Film'
+        '400':
+          description: ID invalide
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                message: "ID film invalide"
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    delete:
+      tags:
+        - Films
+      summary: Supprimer un film
+      description: Supprime un film de la base de données. Seuls les administrateurs peuvent supprimer les films.
+      operationId: deleteFilm
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Identifiant MongoDB unique du film (format ObjectId)
+          schema:
+            type: string
+            format: ObjectId
+          example: "507f1f77bcf86cd799439016"
+      responses:
+        '200':
+          description: Film supprimé
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                message: "Film supprimé avec succès"
+        '400':
+          description: ID invalide
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                message: "ID film invalide"
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /films/{id}/quoteCount:
+    get:
+      tags:
+        - Films
+      summary: Obtenir le nombre de citations pour un film
+      description: Compte le nombre total de citations associées à un film spécifique. Cet endpoint est utile pour connaître la popularité d'un film sur la plateforme.
+      operationId: getQuoteCount
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Identifiant MongoDB unique du film (format ObjectId)
+          schema:
+            type: string
+            format: ObjectId
+          example: "507f1f77bcf86cd799439016"
+      responses:
+        '200':
+          description: Nombre de citations associées au film
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  quoteCount:
+                    type: integer
+                    description: Nombre total de citations associées à ce film
+                    example: 15
+              example:
+                quoteCount: 15
+        '400':
+          description: ID invalide
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                message: "ID film invalide"
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /quotes:
+    get:
+      tags:
+        - Citations
+      summary: Obtenir toutes les citations
+      description: Récupère les citations avec options de pagination et filtrage avancé. Vous pouvez filtrer par émotion, film ou texte, et paginer les résultats. Cette ressource est publique et ne nécessite pas d'authentification.
+      operationId: getQuotes
+      parameters:
+        - name: page
+          in: query
+          required: false
+          description: Numéro de page pour la pagination (commence à 1)
+          schema:
+            type: integer
+            default: 1
+            minimum: 1
+          example: 1
+        - name: limit
+          in: query
+          required: false
+          description: Nombre de résultats par page (0 ou absent = pas de limite, retourne tous les résultats)
+          schema:
+            type: integer
+            default: 0
+            minimum: 0
+          example: 10
+        - name: emotion
+          in: query
+          required: false
+          description: Filtrer les citations par émotion (recherche exacte, ex: "inspiring", "romantic", "funny")
+          schema:
+            type: string
+          example: "inspiring"
+        - name: film
+          in: query
+          required: false
+          description: Filtrer les citations par identifiant de film (ObjectId)
+          schema:
+            type: string
+            format: ObjectId
+          example: "507f1f77bcf86cd799439016"
+        - name: text
+          in: query
+          required: false
+          description: Rechercher dans le texte des citations (recherche insensible à la casse, partielle)
+          schema:
+            type: string
+          example: "Force"
+      responses:
+        '200':
+          description: Citations récupérées avec pagination et filtrage appliqués
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedQuotes'
+              example:
+                page: 1
+                limit: 10
+                total: 45
+                totalPages: 5
+                items:
+                  - _id: "507f1f77bcf86cd799439012"
+                    text: "Que la Force soit avec toi."
+                    emotion: "inspiring"
+                    film: "507f1f77bcf86cd799439016"
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    post:
+      tags:
+        - Citations
+      summary: Créer une citation
+      description: Ajoute une nouvelle citation à la base de données. Seuls les administrateurs peuvent créer des citations.
+      operationId: addQuote
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                text:
+                  type: string
+                  description: Texte exact de la citation du film
+                emotion:
+                  type: string
+                  description: Émotion ou sentiment associé (ex: inspiring, romantic, funny, dramatic)
+                film:
+                  type: string
+                  format: ObjectId
+                  description: Identifiant MongoDB du film auquel appartient la citation
+              required:
+                - text
+                - emotion
+                - film
+            example:
+              text: "Que la Force soit avec toi."
+              emotion: "inspiring"
+              film: "507f1f77bcf86cd799439016"
+      responses:
+        '201':
+          description: Citation créée
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Quote'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /quotes/random:
+    get:
+      tags:
+        - Citations
+      summary: Obtenir une citation aléatoire
+      description: Récupère une citation choisie aléatoirement parmi toutes les citations disponibles. Cet endpoint est utile pour afficher une citation du jour ou pour découvrir des citations au hasard. Cette ressource est publique et ne nécessite pas d'authentification.
+      operationId: getRandomQuote
+      responses:
+        '200':
+          description: Citation trouvée
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Quote'
+        '404':
+          description: Aucune citation disponible
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                message: "Aucune citation disponible"
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /quotes/{id}:
+    get:
+      tags:
+        - Citations
+      summary: Obtenir une citation par ID
+      description: Récupère les détails complets d'une citation spécifique en utilisant son identifiant unique. Cette ressource est publique et ne nécessite pas d'authentification.
+      operationId: getQuoteById
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Identifiant MongoDB unique de la citation (format ObjectId)
+          schema:
+            type: string
+            format: ObjectId
+          example: "507f1f77bcf86cd799439012"
+      responses:
+        '200':
+          description: Citation trouvée
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Quote'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    patch:
+      tags:
+        - Citations
+      summary: Mettre à jour une citation
+      description: Modifie une citation existante. Seuls les administrateurs peuvent modifier les citations.
+      operationId: updateQuote
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Identifiant MongoDB unique de la citation (format ObjectId)
+          schema:
+            type: string
+            format: ObjectId
+          example: "507f1f77bcf86cd799439012"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                text:
+                  type: string
+                emotion:
+                  type: string
+                film:
+                  type: string
+                  format: ObjectId
+            example:
+              text: "Que la Force soit toujours avec toi."
+      responses:
+        '200':
+          description: Citation mise à jour
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Quote'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    delete:
+      tags:
+        - Citations
+      summary: Supprimer une citation
+      description: Supprime une citation de la base de données. Seuls les administrateurs peuvent supprimer les citations.
+      operationId: deleteQuote
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Identifiant MongoDB unique de la citation (format ObjectId)
+          schema:
+            type: string
+            format: ObjectId
+          example: "507f1f77bcf86cd799439012"
+      responses:
+        '200':
+          description: Citation supprimée
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                message: "Citation supprimée"
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /favorites:
+    post:
+      tags:
+        - Favoris
+      summary: Ajouter une citation aux favoris
+      description: Ajoute une citation à la liste des favoris personnels de l'utilisateur actuellement connecté. Cette ressource est protégée et nécessite une authentification valide.
+      operationId: addFavorite
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                quoteId:
+                  type: string
+                  format: ObjectId
+                  description: ID de citation valide
+              required:
+                - quoteId
+            example:
+              quoteId: "507f1f77bcf86cd799439012"
+      responses:
+        '200':
+          description: Ajouté aux favoris
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                message: "Ajouté aux favoris"
+        '400':
+          description: Déjà en favoris ou citation invalide
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                message: "Déjà en favoris"
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          description: Citation non trouvée
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                message: "Citation introuvable"
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    get:
+      tags:
+        - Favoris
+      summary: Obtenir les favoris de l'utilisateur
+      description: Récupère la liste complète de toutes les citations marquées comme favoris par l'utilisateur actuellement connecté. Cette ressource est protégée et nécessite une authentification valide.
+      operationId: getFavorites
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Liste complète des citations marquées comme favorites par l'utilisateur
+          content:
+            application/json:
+              schema:
+                type: array
+                description: Tableau de citations favorites
+                items:
+                  $ref: '#/components/schemas/Quote'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    delete:
+      tags:
+        - Favoris
+      summary: Retirer une citation des favoris
+      description: Supprime une citation de la liste des favoris personnels de l'utilisateur actuellement connecté. Cette ressource est protégée et nécessite une authentification valide.
+      operationId: removeFavorite
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                quoteId:
+                  type: string
+                  format: ObjectId
+                  description: ID de citation valide
+              required:
+                - quoteId
+            example:
+              quoteId: "507f1f77bcf86cd799439012"
+      responses:
+        '200':
+          description: Retiré des favoris
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                message: "Retiré des favoris"
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /push/subscribe:
+    post:
+      tags:
+        - Notifications
+      summary: S'abonner aux notifications push
+      description: Enregistre un appareil pour recevoir des notifications push. Fournissez les détails de votre appareil et les clés de chiffrement pour vous abonner aux notifications. Cette ressource est publique et ne nécessite pas d'authentification.
+      operationId: subscribeToPush
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                endpoint:
+                  type: string
+                  format: uri
+                  description: URL du service de notifications
+                expirationTime:
+                  type: integer
+                  nullable: true
+                  description: Horodatage d'expiration (optionnel)
+                keys:
+                  type: object
+                  properties:
+                    p256dh:
+                      type: string
+                      description: Clé de chiffrement p256dh en base64
+                    auth:
+                      type: string
+                      description: Clé d'authentification en base64
+                  required:
+                    - p256dh
+                    - auth
+              required:
+                - endpoint
+                - keys
+            example:
+              endpoint: "https://fcm.googleapis.com/fcm/send/..."
+              expirationTime: null
+              keys:
+                p256dh: "clé-base64"
+                auth: "auth-base64"
+      responses:
+        '201':
+          description: Abonnement enregistré
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+              example:
+                message: "Abonnement enregistré"
+        '400':
+          description: Données invalides
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                message: "Invalid subscription"
+        '500':
+          $ref: '#/components/responses/InternalServerError'
