@@ -191,8 +191,7 @@ onUnmounted(() => {
   <div class="home-page">
     <header class="home-header">
       <div>
-        <h1 class="logo">CineMood</h1>
-        <p class="subtitle">Citation du jour</p>
+        <h1 class="logo">CineQuote</h1>
       </div>
       <button class="profile-btn" type="button" aria-label="Profil" @click="goToProfile">
         <span class="profile-icon">👤</span>

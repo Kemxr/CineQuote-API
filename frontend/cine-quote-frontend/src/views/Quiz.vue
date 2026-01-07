@@ -301,7 +301,7 @@ const submitAnswer = (value) => {
 
   const answerToSend = value ?? selectedAnswer.value;
 
-  vibrate(40);
+  vibrate(500);
 
   socket.value.emit("answer-question", {
     questionId: currentQuestion.value.id,

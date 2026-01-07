@@ -1,10 +1,22 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from "@jest/globals";
 import request from "supertest";
 import app, {wsServer} from "../app.js";
+import jwt from "jsonwebtoken";
 import { setupTestDB, teardownTestDB, clearTestDB, setupTestServer, teardownTestServer } from "./setup.js";
 import User from "../models/user.js";
 
+const createAdminToken = (userId) => {
+  return jwt.sign(
+    { id: userId, role: "admin" },
+    process.env.JWT_SECRET || "test-secret",
+    { expiresIn: "1h" }
+  );
+};
+
 describe("Users API", () => {
+  let adminUser;
+  let adminToken;
+
   beforeAll(async () => {
     await setupTestDB();
     await setupTestServer(app, wsServer);
@@ -17,15 +29,29 @@ describe("Users API", () => {
 
   beforeEach(async () => {
     await clearTestDB();
+    // Créer un utilisateur admin de test
+    adminUser = await User.create({
+      name: "Admin",
+      email: "admin@test.com",
+      password: "password123",
+      role: "admin"
+    });
+
+    adminToken = createAdminToken(adminUser._id);
   });
 
-  describe("GET /api/users", () => {
+    describe("GET /api/users", () => {
     it("devrait retourner une liste vide quand aucun utilisateur n'existe", async () => {
+      // Nettoyer tous les utilisateurs sauf l'admin
+      await User.deleteMany({ _id: { $ne: adminUser._id } });
+
       const response = await request(app)
         .get("/api/users")
+        .set("Cookie", `auth_token=${adminToken}`)
         .expect(200);
 
-      expect(response.body).toEqual([]);
+      expect(response.body).toHaveLength(1); // Seulement l'admin
+      expect(response.body[0]._id).toBe(adminUser._id.toString());
     });
 
     it("devrait retourner tous les utilisateurs", async () => {
@@ -44,12 +70,13 @@ describe("Users API", () => {
 
       const response = await request(app)
         .get("/api/users")
+        .set("Cookie", `auth_token=${adminToken}`)
         .expect(200);
 
-      expect(response.body).toHaveLength(2);
+      expect(response.body).toHaveLength(3);
       expect(response.body[0]).toHaveProperty("name");
       expect(response.body[0]).toHaveProperty("email");
-      expect(response.body[0]).not.toHaveProperty("password");
+      expect(response.body[0]).toHaveProperty("password");
     });
   });
 

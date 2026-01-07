@@ -1,3 +1,86 @@
+<script setup>
+import { ref, onMounted } from "vue";
+import { useRouter } from "vue-router";
+import { useEmotions } from "@/composables/useEmotions";
+
+const router = useRouter();
+const { getEmotionIcon: getEmotionEmoji } = useEmotions();
+
+const favorites = ref([]);
+const loading = ref(false);
+const error = ref(null);
+const selectedQuote = ref(null);
+
+async function fetchFavorites() {
+  try {
+    loading.value = true;
+    error.value = null;
+
+    const response = await fetch("/api/favorites", {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      credentials: "include"
+    });
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        throw new Error("Veuillez vous connecter pour voir vos favoris");
+      }
+      throw new Error(`HTTP ${response.status}`);
+    }
+
+    const data = await response.json();
+    favorites.value = data || [];
+  } catch (e) {
+    console.error(e);
+    error.value = e.message || "Impossible de charger vos favoris.";
+  } finally {
+    loading.value = false;
+  }
+}
+
+async function removeFavorite(quoteId) {
+  try {
+    const response = await fetch("/api/favorites", {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      credentials: "include",
+      body: JSON.stringify({ quoteId })
+    });
+
+    if (!response.ok) {
+      throw new Error("Erreur lors de la suppression du favori");
+    }
+
+    favorites.value = favorites.value.filter(q => q._id !== quoteId);
+    closeQuoteDetail();
+  } catch (e) {
+    console.error(e);
+    error.value = e.message || "Erreur lors de la suppression du favori";
+  }
+}
+
+function openQuoteDetail(quote) {
+  selectedQuote.value = quote;
+}
+
+function closeQuoteDetail() {
+  selectedQuote.value = null;
+}
+
+function goBack() {
+  router.back();
+}
+
+onMounted(() => {
+  fetchFavorites();
+});
+</script>
+
 <template>
   <div class="favorites-page">
     <header class="favorites-header">
@@ -123,89 +206,6 @@
     </div>
   </div>
 </template>
-
-<script setup>
-import { ref, onMounted } from "vue";
-import { useRouter } from "vue-router";
-import { useEmotions } from "@/composables/useEmotions";
-
-const router = useRouter();
-const { getEmotionIcon: getEmotionEmoji } = useEmotions();
-
-const favorites = ref([]);
-const loading = ref(false);
-const error = ref(null);
-const selectedQuote = ref(null);
-
-async function fetchFavorites() {
-  try {
-    loading.value = true;
-    error.value = null;
-
-    const response = await fetch("/api/favorites", {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      credentials: "include"
-    });
-
-    if (!response.ok) {
-      if (response.status === 401) {
-        throw new Error("Veuillez vous connecter pour voir vos favoris");
-      }
-      throw new Error(`HTTP ${response.status}`);
-    }
-
-    const data = await response.json();
-    favorites.value = data || [];
-  } catch (e) {
-    console.error(e);
-    error.value = e.message || "Impossible de charger vos favoris.";
-  } finally {
-    loading.value = false;
-  }
-}
-
-async function removeFavorite(quoteId) {
-  try {
-    const response = await fetch("/api/favorites", {
-      method: "DELETE",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      credentials: "include",
-      body: JSON.stringify({ quoteId })
-    });
-
-    if (!response.ok) {
-      throw new Error("Erreur lors de la suppression du favori");
-    }
-
-    favorites.value = favorites.value.filter(q => q._id !== quoteId);
-    closeQuoteDetail();
-  } catch (e) {
-    console.error(e);
-    error.value = e.message || "Erreur lors de la suppression du favori";
-  }
-}
-
-function openQuoteDetail(quote) {
-  selectedQuote.value = quote;
-}
-
-function closeQuoteDetail() {
-  selectedQuote.value = null;
-}
-
-function goBack() {
-  router.back();
-}
-
-onMounted(() => {
-  fetchFavorites();
-});
-</script>
 
 <style scoped>
 .favorites-page {

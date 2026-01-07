@@ -1,3 +1,82 @@
+<script setup>
+import { ref, watch, onMounted } from "vue";
+import { useRouter } from "vue-router";
+import { useFavorites } from "@/composables/useFavorites";
+import { useEmotions } from "@/composables/useEmotions";
+
+const router = useRouter();
+const { favorites, fetchFavorites, isFavorite, toggleFavorite } = useFavorites();
+const { emotions, getEmotionIcon: getEmotionEmoji } = useEmotions();
+
+const search = ref("");
+const selectedEmotion = ref("tout");
+const quotes = ref([]);
+const loading = ref(false);
+const error = ref(null);
+const selectedQuote = ref(null);
+
+async function fetchQuotes() {
+  try {
+    loading.value = true;
+    error.value = null;
+
+    const params = {
+      limit: 100,
+    };
+
+    // N'ajouter le filtre émotion que si ce n'est pas "tout"
+    if (selectedEmotion.value !== "tout") {
+      params.emotion = selectedEmotion.value;
+    }
+
+    if (search.value.trim()) {
+      params.text = search.value.trim();
+    }
+
+    const query = new URLSearchParams(params).toString();
+    const response = await fetch(`/api/quotes?${query}`);
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+
+    const data = await response.json();
+    quotes.value = data.items || [];
+  } catch (e) {
+    console.error(e);
+    error.value = "Impossible de charger les citations.";
+  } finally {
+    loading.value = false;
+  }
+}
+
+function selectEmotion(id) {
+  selectedEmotion.value = id;
+}
+
+function openQuoteDetail(quote) {
+  selectedQuote.value = quote;
+}
+
+function closeQuoteDetail() {
+  selectedQuote.value = null;
+}
+
+let searchTimeout = null;
+
+watch([selectedEmotion, search], () => {
+  if (searchTimeout) clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(() => {
+    fetchQuotes();
+  }, 300);
+});
+
+onMounted(() => {
+  fetchFavorites();
+  fetchQuotes();
+});
+</script>
+
 <template>
   <div class="explore-page">
     <header class="explore-header">
@@ -121,85 +200,6 @@
     </div>
   </div>
 </template>
-
-<script setup>
-import { ref, watch, onMounted } from "vue";
-import { useRouter } from "vue-router";
-import { useFavorites } from "@/composables/useFavorites";
-import { useEmotions } from "@/composables/useEmotions";
-
-const router = useRouter();
-const { favorites, fetchFavorites, isFavorite, toggleFavorite } = useFavorites();
-const { emotions, getEmotionIcon: getEmotionEmoji } = useEmotions();
-
-const search = ref("");
-const selectedEmotion = ref("tout");
-const quotes = ref([]);
-const loading = ref(false);
-const error = ref(null);
-const selectedQuote = ref(null);
-
-async function fetchQuotes() {
-  try {
-    loading.value = true;
-    error.value = null;
-
-    const params = {
-      limit: 100,
-    };
-
-    // N'ajouter le filtre émotion que si ce n'est pas "tout"
-    if (selectedEmotion.value !== "tout") {
-      params.emotion = selectedEmotion.value;
-    }
-
-    if (search.value.trim()) {
-      params.text = search.value.trim();
-    }
-
-    const query = new URLSearchParams(params).toString();
-    const response = await fetch(`/api/quotes?${query}`);
-
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`);
-    }
-
-    const data = await response.json();
-    quotes.value = data.items || [];
-  } catch (e) {
-    console.error(e);
-    error.value = "Impossible de charger les citations.";
-  } finally {
-    loading.value = false;
-  }
-}
-
-function selectEmotion(id) {
-  selectedEmotion.value = id;
-}
-
-function openQuoteDetail(quote) {
-  selectedQuote.value = quote;
-}
-
-function closeQuoteDetail() {
-  selectedQuote.value = null;
-}
-
-let searchTimeout = null;
-
-watch([selectedEmotion, search], () => {
-  if (searchTimeout) clearTimeout(searchTimeout);
-  searchTimeout = setTimeout(() => {
-    fetchQuotes();
-  }, 300);
-});
-
-onMounted(() => {
-  fetchFavorites();
-  fetchQuotes();
-});
-</script>
 
 <style scoped>
 .explore-page {
