@@ -2,9 +2,11 @@ import { createApp } from 'vue'
 import './style.css'
 import App from './App.vue'
 import router from '../router.js'
+import { registerSW } from 'virtual:pwa-register'
 
 createApp(App).use(router).mount('#app')
 
+// Configuration des push notifications
 if (typeof window !== 'undefined' && 'serviceWorker' in navigator && 'PushManager' in window) {
   const VAPID_PUBLIC_KEY = 'BKvszeeoOzdvxWsG_jHoAD5H-ttkrW6x5gTiDWHQmPNs7_SE3zEJXtEJUQh69WV1YrdcjxNq57mfNwuihwWn6Ag';
 
@@ -21,7 +23,11 @@ if (typeof window !== 'undefined' && 'serviceWorker' in navigator && 'PushManage
     return outputArray;
   }
 
-  navigator.serviceWorker.register('/sw.js').then(async registration => {
+  // Auto-update du SW avec Vite PWA
+  registerSW({ immediate: true });
+
+  // Attendre que le SW soit prêt
+  navigator.serviceWorker.ready.then(async registration => {
     let permission = Notification.permission;
     if (permission === 'default') {
       permission = await Notification.requestPermission();
@@ -52,7 +58,5 @@ if (typeof window !== 'undefined' && 'serviceWorker' in navigator && 'PushManage
     } catch (e) {
       console.error('Error sending push subscription to backend', e);
     }
-  }).catch(err => {
-    console.error('Service Worker registration failed', err);
   });
 }

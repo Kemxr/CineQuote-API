@@ -3,6 +3,8 @@ import { ref, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { authAPI } from '@/services/api';
 
+//Enlever la partie badge et mettre qu'on puisse ajouter nos films préférées
+
 const router = useRouter();
 const user = ref(null);
 const loading = ref(true);

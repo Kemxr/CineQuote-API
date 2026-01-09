@@ -11,8 +11,8 @@ self.addEventListener('push', event => {
   const title = data.title || 'Nouvelle citation';
   const options = {
     body: data.body || "Une nouvelle citation est disponible aujourd'hui.",
-    icon: data.icon || '/icon-192.png',
-    badge: data.badge || '/icon-192.png',
+    icon: data.icon || '/DVD-192.jpg',
+    badge: data.badge || '/DVD-192.jpg',
     data: data.data || {},
   };
 
