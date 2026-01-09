@@ -9,7 +9,7 @@ const { getEmotionIcon } = useEmotions();
 const quote = ref(null);
 const isFav = ref(false);
 const loading = ref(true);
-const currentTime = ref(new Date().toLocaleTimeString('fr-FR'));
+const countdown = ref("");
 let dailyRefreshTimeout = null;
 let dailyRefreshInterval = null;
 let timeInterval = null;
@@ -21,6 +21,24 @@ const backgroundStyle = computed(() => {
     "--quote-bg-image": `url(${image})`,
   };
 });
+
+function updateCountdown() {
+  const now = new Date();
+  const next9AM = new Date();
+  next9AM.setHours(9, 0, 0, 0);
+
+  if (now >= next9AM) {
+    next9AM.setDate(next9AM.getDate() + 1);
+  }
+
+  const diff = next9AM - now;
+  
+  const hours = Math.floor(diff / (1000 * 60 * 60));
+  const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+  const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+  countdown.value = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+}
 
 async function fetchDailyQuote() {
   try {
@@ -153,8 +171,10 @@ onMounted(() => {
   loadDailyQuote();
   scheduleDailyRefresh();
   
+  // Initialiser le décompte et le mettre à jour chaque seconde
+  updateCountdown();
   timeInterval = setInterval(() => {
-    currentTime.value = new Date().toLocaleTimeString('fr-FR');
+    updateCountdown();
   }, 1000);
 
   if (typeof window !== 'undefined' && 'Notification' in window) {
@@ -203,7 +223,7 @@ onUnmounted(() => {
         <!-- Badge heure en haut à gauche -->
         <div class="badge badge-time">
           <span class="badge-icon">⏱</span>
-          <span>{{ currentTime }}</span>
+          <span>{{ countdown }}</span>
         </div>
 
         <!-- Badge émotion en haut à droite -->

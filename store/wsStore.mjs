@@ -298,7 +298,7 @@ class SocketIOManager {
       roomName,
       questions,
       currentIndex: 0,
-      scores: new Map(), // socketId -> score
+      scores: new Map(),
       answersForCurrent: [],
       questionStartTime: null,
       timer: null,
@@ -352,6 +352,7 @@ class SocketIOManager {
       socketId: socket.id,
       correct: isCorrect,
       time: elapsed,
+      answer,
     });
 
     if (quiz.answersForCurrent.length >= room.users.size) {
@@ -373,7 +374,6 @@ class SocketIOManager {
 
     const perPlayer = [];
 
-    // initialiser tous les joueurs avec 0
     for (const player of room.users.values()) {
       perPlayer.push({
         id: player.id,
@@ -384,7 +384,6 @@ class SocketIOManager {
       });
     }
 
-    // appliquer les points pour les bonnes réponses
     answers.forEach((ans, idx) => {
       const base = 10;
       const bonus = idx < bonuses.length ? bonuses[idx] : minBonus;
@@ -455,21 +454,58 @@ class SocketIOManager {
   }
 
   endQuestion(roomName) {
-    const quiz = this.quizzes.get(roomName);
-    const room = this.rooms.get(roomName);
-    if (!quiz || !room || quiz.finished) return;
+  const quiz = this.quizzes.get(roomName);
+  const room = this.rooms.get(roomName);
+  if (!quiz || !room || quiz.finished) return;
 
-    const results = this.computeScoresForQuestion(quiz, room);
+  const answers = quiz.answersForCurrent;
+  const results = [];
 
-    this.io.to(roomName).emit("question-ended", {
-      questionIndex: quiz.currentIndex,
-      results,
-      scores: this.serializeScores(quiz, room),
+  const bonuses = [10, 7, 5];
+  const minBonus = 3;
+
+  // trier les bonnes réponses par temps
+  const correctAnswers = answers
+    .filter((a) => a.correct)
+    .sort((a, b) => a.time - b.time);
+
+  correctAnswers.forEach((ans, idx) => {
+    const base = 10;
+    const bonus = idx < bonuses.length ? bonuses[idx] : minBonus;
+    const gained = base + bonus;
+
+    const prev = quiz.scores.get(ans.socketId) || 0;
+    const newScore = prev + gained;
+    quiz.scores.set(ans.socketId, newScore);
+  });
+
+  for (const player of room.users.values()) {
+    const ans = answers.find((a) => a.socketId === player.id);
+    results.push({
+      id: player.id,
+      user: player.user,
+      answer: ans ? ans.answer : null,
+      correct: !!(ans && ans.correct),
+      pointsGained: ans && ans.correct
+        ? (correctAnswers.findIndex((a) => a.socketId === player.id) === 0
+            ? 20
+            : 10)
+        : 0,
+      totalScore: quiz.scores.get(player.id) || 0,
     });
-
-    quiz.currentIndex += 1;
-    this.sendQuestion(roomName);
   }
+
+  this.io.to(roomName).emit("question-ended", {
+    questionIndex: quiz.currentIndex,
+    results,
+    scores: this.serializeScores(quiz, room),
+    correctAnswer: quiz.questions[quiz.currentIndex].correctAnswer,
+  });
+
+  quiz.currentIndex += 1;
+  this.sendQuestion(roomName);
+}
+
 
   endGame(roomName) {
     const quiz = this.quizzes.get(roomName);

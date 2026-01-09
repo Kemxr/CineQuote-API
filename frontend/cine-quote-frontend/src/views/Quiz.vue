@@ -144,71 +144,40 @@ onMounted(async () => {
   });
 
   socket.value.on(
-    "question-ended",
-    ({ questionIndex: qi, results, scores: sc, correctAnswer: ca }) => {
-      console.log(
-        "📋 Question ended - Index:",
-        qi,
-        "Results:",
-        results,
-        "Scores:",
-        sc,
-        "Correct Answer:",
-        ca
-      );
-
-      if (questionTimer.value) {
-        clearInterval(questionTimer.value);
-        questionTimer.value = null;
-      }
-
-      // 1) déterminer la bonne réponse texte
-      let finalCorrectAnswer = ca || correctAnswer.value;
-
-      if (results && Array.isArray(results) && results.length > 0) {
-        const correctResult = results.find((r) => r.isCorrect === true);
-        if (correctResult && correctResult.answer) {
-          finalCorrectAnswer = correctResult.answer;
-        }
-      }
-
-      const userAnswered = (selectedAnswer.value || "").trim();
-      const normalizedUser = userAnswered.toLowerCase().replace(/\s+/g, " ").trim();
-      const normalizedCorrect = (finalCorrectAnswer || "")
-        .toLowerCase()
-        .replace(/\s+/g, " ")
-        .trim();
-
-      const isCorrect =
-        normalizedUser.length > 0 && normalizedUser === normalizedCorrect;
-
-      console.log("🔍 DEBUG ANSWER", {
-        userAnswered,
-        finalCorrectAnswer,
-        normalizedUser,
-        normalizedCorrect,
-        isCorrect,
-      });
-
-      const questionData = {
-        question: currentQuestion.value?.text || "",
-        correctAnswer: finalCorrectAnswer || "",
-        userAnswer: userAnswered,
-        isCorrect,
-      };
-      questionHistory.value.push(questionData);
-
-      console.log("✅ Historique ajouté:", questionData);
-
-      revealAnswer.value = true;
-      correctAnswer.value = finalCorrectAnswer;
-      scores.value = sc;
-
-      setTimeout(() => {
-        revealAnswer.value = false;
-      }, 2000);
+  "question-ended",
+  ({ questionIndex: qi, results, scores: sc, correctAnswer: ca }) => {
+    if (questionTimer.value) {
+      clearInterval(questionTimer.value);
+      questionTimer.value = null;
     }
-  );
+
+    const finalCorrectAnswer = ca || correctAnswer.value || "";
+
+    const userAnswer = (selectedAnswer.value || "").trim();
+
+    const normalizedUser = userAnswer.toLowerCase().replace(/\s+/g, " ").trim();
+    const normalizedCorrect = finalCorrectAnswer
+      .toLowerCase()
+      .replace(/\s+/g, " ")
+      .trim();
+
+    const isCorrect =
+      normalizedUser.length > 0 && normalizedUser === normalizedCorrect;
+
+    const questionData = {
+      question: currentQuestion.value?.text || "",
+      correctAnswer: finalCorrectAnswer,
+      userAnswer,
+      isCorrect,
+    };
+    questionHistory.value.push(questionData);
+
+    revealAnswer.value = true;
+    correctAnswer.value = finalCorrectAnswer;
+    scores.value = sc;
+  }
+);
+
 
   socket.value.on("game-ended", ({ scores: sc }) => {
     console.log("Game ended:", sc);
