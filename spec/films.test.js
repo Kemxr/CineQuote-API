@@ -1,10 +1,23 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from "@jest/globals";
 import request from "supertest";
+import jwt from "jsonwebtoken";
 import app from "../app.js";
 import { setupTestDB, teardownTestDB, clearTestDB } from "./setup.js";
 import Film from "../models/film.js";
+import User from "../models/user.js";
+
+const createAdminToken = (userId) => {
+  return jwt.sign(
+    { id: userId, role: "admin" },
+    process.env.JWT_SECRET || "test-secret",
+    { expiresIn: "1h" }
+  );
+};
 
 describe("Films API", () => {
+  let adminUser;
+  let adminToken;
+
   beforeAll(async () => {
     await setupTestDB();
   });
@@ -15,6 +28,16 @@ describe("Films API", () => {
 
   beforeEach(async () => {
     await clearTestDB();
+
+    // Créer un utilisateur admin de test
+    adminUser = await User.create({
+      name: "Admin",
+      email: "admin@test.com",
+      password: "password123",
+      role: "admin"
+    });
+
+    adminToken = createAdminToken(adminUser._id);
   });
 
   describe("POST /api/films", () => {
@@ -29,6 +52,7 @@ describe("Films API", () => {
 
       const response = await request(app)
         .post("/api/films")
+        .set("Cookie", `auth_token=${adminToken}`)
         .send(filmData)
         .expect(201);
 
@@ -48,10 +72,27 @@ describe("Films API", () => {
 
       const response = await request(app)
         .post("/api/films")
+        .set("Cookie", `auth_token=${adminToken}`)
         .send(filmData)
         .expect(400);
 
       expect(response.body).toHaveProperty("message");
+    });
+
+    it("devrait rejeter sans authentification", async () => {
+      const filmData = {
+        title: "Inception",
+        year: 2010,
+        director: "Christopher Nolan",
+        genre: "Science-Fiction"
+      };
+
+      const response = await request(app)
+        .post("/api/films")
+        .send(filmData)
+        .expect(401);
+
+      expect(response.body.message).toContain("Non autorisé");
     });
   });
 
@@ -65,7 +106,6 @@ describe("Films API", () => {
     });
 
     it("devrait retourner tous les films", async () => {
-      // Créer des films de test
       await Film.create([
         {
           title: "Inception",

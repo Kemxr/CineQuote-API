@@ -3,40 +3,14 @@ import { ref, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { authAPI } from '@/services/api';
 
-//Enlever la partie badge et mettre qu'on puisse ajouter nos films préférées
-
 const router = useRouter();
 const user = ref(null);
 const loading = ref(true);
-const stats = ref({
-  favorites: 0,
-  moviesWatched: 0,
-  quotes: 0
-});
+const favoriteCount = ref(0);
 
-const badges = ref([
-  {
-    id: 1,
-    name: 'Cinéphile',
-    icon: '🎬',
-    description: 'Regardez 10 films',
-    unlockedAt: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString()
-  },
-  {
-    id: 2,
-    name: 'Collectionneur',
-    icon: '❤️',
-    description: 'Ajoutez 5 favoris',
-    unlockedAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString()
-  },
-  {
-    id: 3,
-    name: 'Maître du Quiz',
-    icon: '🏆',
-    description: 'Complétez 3 quiz',
-    unlockedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString()
-  }
-]);
+const favoriteFilms = ref([]);
+const selectedFilm = ref(null);
+const isModalOpen = ref(false);
 
 async function fetchUserProfile() {
   try {
@@ -44,10 +18,7 @@ async function fetchUserProfile() {
     const response = await authAPI.getProfile();
     user.value = response.data;
     
-    await fetchFavoritesCount();
-    
-    stats.value.moviesWatched = 45;
-    stats.value.quotes = 158;
+    await fetchFavorites();
   } catch (err) {
     console.error('Error fetching profile:', err);
     user.value = null;
@@ -56,7 +27,7 @@ async function fetchUserProfile() {
   }
 }
 
-async function fetchFavoritesCount() {
+async function fetchFavorites() {
   try {
     const response = await fetch('/api/favorites', {
       headers: {
@@ -64,14 +35,26 @@ async function fetchFavoritesCount() {
       }
     });
     if (response.ok) {
-      const data = await response.json();
-      stats.value.favorites = data.length || 0;
+      const favoriteQuotes = await response.json();
+      favoriteCount.value = favoriteQuotes.length || 0;
+      
+      // Extraire les films uniques des citations favorites
+      const filmsMap = new Map();
+      favoriteQuotes.forEach(quote => {
+        if (quote.film && !filmsMap.has(quote.film._id)) {
+          filmsMap.set(quote.film._id, quote.film);
+        }
+      });
+      
+      favoriteFilms.value = Array.from(filmsMap.values());
     } else {
-      stats.value.favorites = 0;
+      favoriteFilms.value = [];
+      favoriteCount.value = 0;
     }
   } catch (err) {
-    console.error('Error fetching favorites count:', err);
-    stats.value.favorites = 0;
+    console.error('Error fetching favorites:', err);
+    favoriteFilms.value = [];
+    favoriteCount.value = 0;
   }
 }
 
@@ -91,13 +74,30 @@ function formatDate(dateString) {
   return new Date(dateString).toLocaleDateString('fr-FR', options);
 }
 
+function openFilmModal(film) {
+  selectedFilm.value = film;
+  isModalOpen.value = true;
+}
+
+function closeModal() {
+  isModalOpen.value = false;
+  setTimeout(() => {
+    selectedFilm.value = null;
+  }, 300);
+}
+
+function goToFilm(filmId) {
+  closeModal();
+  router.push(`/films/${filmId}`);
+}
+
 onMounted(() => {
   fetchUserProfile();
-  window.addEventListener('favoriteUpdated', fetchFavoritesCount);
+  window.addEventListener('favoriteUpdated', fetchFavorites);
 });
 
 onUnmounted(() => {
-  window.removeEventListener('favoriteUpdated', fetchFavoritesCount);
+  window.removeEventListener('favoriteUpdated', fetchFavorites);
 });
 </script>
 
@@ -145,48 +145,37 @@ onUnmounted(() => {
             <span class="detail-label">Statut</span>
             <span class="detail-value active-badge">Actif</span>
           </div>
-        </div>
-      </section>
-
-      <!-- Stats Section -->
-      <section class="stats-section">
-        <h3 class="section-title">Statistiques</h3>
-        <div class="stats-grid">
-          <div class="stat-card">
-            <div class="stat-icon">❤️</div>
-            <div class="stat-info">
-              <p class="stat-label">Favoris</p>
-              <p class="stat-value">{{ stats.favorites }}</p>
-            </div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-icon">🎬</div>
-            <div class="stat-info">
-              <p class="stat-label">Films vus</p>
-              <p class="stat-value">{{ stats.moviesWatched }}</p>
-            </div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-icon">✨</div>
-            <div class="stat-info">
-              <p class="stat-label">Citations</p>
-              <p class="stat-value">{{ stats.quotes }}</p>
-            </div>
+          <div class="detail-item">
+            <span class="detail-label">Citations Favorites</span>
+            <span class="detail-value favorite-count">
+              <span class="favorite-icon">❤️</span>
+              {{ favoriteCount }}
+            </span>
           </div>
         </div>
       </section>
 
-      <!-- Badges Section -->
-      <section class="badges-section">
-        <h3 class="section-title">Badges & Réalisations</h3>
-        <div class="badges-grid">
-          <div v-for="badge in badges" :key="badge.id" class="badge-item" :title="badge.description">
-            <div class="badge-icon">{{ badge.icon }}</div>
-            <p class="badge-name">{{ badge.name }}</p>
-            <p class="badge-date">{{ formatDate(badge.unlockedAt) }}</p>
+      <!-- Favorite Films Section -->
+      <section class="favorites-section">
+        <h3 class="section-title">Films Favoris</h3>
+        <div v-if="favoriteFilms.length > 0" class="films-grid">
+          <div 
+            v-for="film in favoriteFilms" 
+            :key="film._id" 
+            class="film-card"
+            @click="openFilmModal(film)"
+            :title="film.title"
+          >
+            <img 
+              :src="film.image || '/placeholder-film.jpg'" 
+              :alt="film.title"
+              class="film-poster"
+            />
           </div>
         </div>
-        <p v-if="badges.length === 0" class="no-badges">Aucun badge pour le moment. Continuez à jouer pour en débloquer!</p>
+        <p v-else class="no-favorites">
+          Aucun film favori pour le moment. Ajoutez des citations en favoris pour voir les films associés ici!
+        </p>
       </section>
     </main>
 
@@ -207,6 +196,34 @@ onUnmounted(() => {
         </div>
       </div>
     </main>
+
+    <!-- Film Modal -->
+    <Transition name="modal">
+      <div v-if="isModalOpen && selectedFilm" class="modal-overlay" @click="closeModal">
+        <div class="modal-content" @click.stop>
+          <button class="modal-close" @click="closeModal" aria-label="Fermer">✕</button>
+          <div class="modal-poster-container">
+            <img 
+              :src="selectedFilm.image || '/placeholder-film.jpg'" 
+              :alt="selectedFilm.title"
+              class="modal-poster"
+            />
+          </div>
+          <div class="modal-info">
+            <h3 class="modal-title">{{ selectedFilm.title }}</h3>
+            <p class="modal-details">
+              <span>{{ selectedFilm.year }}</span>
+              <span class="separator">•</span>
+              <span>{{ selectedFilm.director }}</span>
+            </p>
+            <p class="modal-genre">{{ selectedFilm.genre }}</p>
+            <button class="btn btn-primary modal-btn" @click="router.push('/explore')">
+              Voir les citations
+            </button>
+          </div>
+        </div>
+      </div>
+    </Transition>
   </div>
 </template>
 
@@ -366,8 +383,7 @@ onUnmounted(() => {
 
 /* Details Section */
 .details-section,
-.stats-section,
-.badges-section {
+.favorites-section {
   padding: 24px;
   border-radius: 24px;
   background: rgba(255, 255, 255, 0.04);
@@ -413,6 +429,18 @@ onUnmounted(() => {
   font-weight: 500;
 }
 
+.favorite-count {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.favorite-icon {
+  font-size: 20px;
+}
+
 .active-badge {
   display: inline-flex;
   align-items: center;
@@ -437,97 +465,170 @@ onUnmounted(() => {
   border-radius: 50%;
 }
 
-/* Stats Section */
-.stats-grid {
+/* Favorite Films Section */
+.films-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
   gap: 16px;
 }
 
-.stat-card {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 16px;
-  background: rgba(255, 255, 255, 0.04);
+.film-card {
+  position: relative;
+  aspect-ratio: 2 / 3;
   border-radius: 12px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.stat-icon {
-  font-size: 28px;
-  flex-shrink: 0;
+.film-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
 }
 
-.stat-info {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.stat-label {
-  font-size: 12px;
-  color: #9fa8c6;
-  font-weight: 500;
-}
-
-.stat-value {
-  font-size: 20px;
-  font-weight: 700;
-  color: #f5f7ff;
-}
-
-/* Badges Section */
-.badges-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-  gap: 16px;
-}
-
-.badge-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 16px;
-  background: rgba(167, 139, 250, 0.1);
-  border: 1px solid rgba(167, 139, 250, 0.3);
-  border-radius: 12px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.badge-item:hover {
-  background: rgba(167, 139, 250, 0.2);
-  border-color: rgba(167, 139, 250, 0.5);
-  transform: translateY(-2px);
-}
-
-.badge-icon {
-  font-size: 32px;
+.film-poster {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
   display: block;
 }
 
-.badge-name {
-  font-size: 13px;
-  font-weight: 600;
-  color: #dde3ff;
+.no-favorites {
   text-align: center;
-}
-
-.badge-date {
-  font-size: 11px;
-  color: #9fa8c6;
-  text-align: center;
-}
-
-.no-badges {
-  grid-column: 1 / -1;
-  text-align: center;
-  padding: 24px;
+  padding: 40px 20px;
   color: #9fa8c6;
   font-size: 14px;
+  line-height: 1.6;
+}
+
+/* Modal */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(5, 11, 26, 0.92);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.modal-content {
+  position: relative;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 24px;
+  padding: 24px;
+  max-width: 500px;
+  width: 100%;
+  backdrop-filter: blur(20px);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.modal-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.08);
+  color: #f5f7ff;
+  font-size: 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  z-index: 10;
+}
+
+.modal-close:hover {
+  background: rgba(255, 255, 255, 0.15);
+  transform: rotate(90deg);
+}
+
+.modal-poster-container {
+  width: 100%;
+  aspect-ratio: 2 / 3;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.modal-poster {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.modal-info {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  text-align: center;
+}
+
+.modal-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: #f5f7ff;
+  margin: 0;
+}
+
+.modal-details {
+  font-size: 14px;
+  color: #9fa8c6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.separator {
+  color: #5a6489;
+}
+
+.modal-genre {
+  font-size: 13px;
+  color: #a78bfa;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.modal-btn {
+  margin-top: 8px;
+}
+
+/* Modal Transitions */
+.modal-enter-active,
+.modal-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.modal-enter-active .modal-content,
+.modal-leave-active .modal-content {
+  transition: transform 0.3s ease;
+}
+
+.modal-enter-from,
+.modal-leave-to {
+  opacity: 0;
+}
+
+.modal-enter-from .modal-content,
+.modal-leave-to .modal-content {
+  transform: scale(0.9) translateY(20px);
 }
 
 /* Auth Container */
@@ -624,12 +725,23 @@ onUnmounted(() => {
     text-align: center;
   }
 
-  .details-grid,
-  .stats-grid {
+  .details-grid {
     grid-template-columns: 1fr;
   }
 
+  .films-grid {
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  }
+
   .header-title {
+    font-size: 20px;
+  }
+
+  .modal-content {
+    max-width: 380px;
+  }
+
+  .modal-title {
     font-size: 20px;
   }
 }
@@ -646,8 +758,7 @@ onUnmounted(() => {
 
   .user-card,
   .details-section,
-  .stats-section,
-  .badges-section {
+  .favorites-section {
     padding: 16px;
     border-radius: 16px;
   }
@@ -669,12 +780,26 @@ onUnmounted(() => {
     font-size: 14px;
   }
 
-  .stat-value {
-    font-size: 18px;
+  .films-grid {
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 12px;
   }
 
   .auth-card {
     padding: 28px 20px;
+  }
+
+  .modal-content {
+    padding: 20px;
+    max-width: 320px;
+  }
+
+  .modal-title {
+    font-size: 18px;
+  }
+
+  .modal-details {
+    font-size: 13px;
   }
 }
 </style>

@@ -18,10 +18,9 @@ info:
     name: MIT
 
 servers:
-  - url: http://localhost:10000/
-    description: Serveur de développement local
   - url: http://localhost:8899/api
-    description: Serveur WebSocket alternatif
+    description: Backend local
+
 
 tags:
   - name: Authentification
