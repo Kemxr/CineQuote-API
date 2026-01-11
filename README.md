@@ -134,6 +134,7 @@ npm run clear
 
 ## Lancement du Projet
 
+
 ### Mode Développement (À la racine du projet)
 
 ```bash
@@ -161,6 +162,10 @@ Lance le projet en mode production optimisé.
 npm run dev:server    # Serveur backend uniquement
 npm run dev:client    # Client frontend uniquement
 ```
+
+### Tester les routes en tant qu'admin
+**Email** : admin@cinequote.test
+**Mot de passe** :admin123
 
 ### Tests
 

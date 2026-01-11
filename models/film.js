@@ -19,7 +19,7 @@ const filmSchema = new mongoose.Schema({
     },
     image: {
         type: String
-    }, // Ajouter url image en bien
+    },
 });
 
 const Film = mongoose.model("Film", filmSchema);
