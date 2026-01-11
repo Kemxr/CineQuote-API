@@ -9,6 +9,9 @@
 
 L'API fournit les services nécessaires pour l'authentification, la consultation des films et citations, la gestion des favoris, et les notifications push. **La documentation complète de l'API est disponible via Swagger/OpenAPI** (voir section [Documentation de l'API](#documentation-de-lapi)).
 
+## Lien de application (Render)
+**CineQuote** : https://cinequote-api.onrender.com
+
 ## Technologies Utilisées
 
 | Composant | Technologie | Rôle |
