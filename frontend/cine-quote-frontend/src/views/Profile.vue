@@ -717,6 +717,7 @@ onUnmounted(() => {
 
   .profile-content {
     gap: 16px;
+    margin-bottom: 70px;
   }
 
   .user-card {
@@ -754,6 +755,7 @@ onUnmounted(() => {
   .profile-content {
     padding: 0;
     gap: 16px;
+    margin-bottom: 70px;
   }
 
   .user-card,

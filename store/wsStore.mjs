@@ -11,7 +11,6 @@ class SocketIOManager {
   }
 
   buildQuizQuestionsFromSeed(limit = 10) {
-    // Map rapide idFilm -> film
     const filmById = new Map(filmsSeed.map((f) => [f.id, f]));
 
     // Construit la liste des titres pour les mauvaises réponses
@@ -454,58 +453,58 @@ class SocketIOManager {
   }
 
   endQuestion(roomName) {
-  const quiz = this.quizzes.get(roomName);
-  const room = this.rooms.get(roomName);
-  if (!quiz || !room || quiz.finished) return;
+    const quiz = this.quizzes.get(roomName);
+    const room = this.rooms.get(roomName);
+    if (!quiz || !room || quiz.finished) return;
 
-  const answers = quiz.answersForCurrent;
-  const results = [];
+    const answers = quiz.answersForCurrent;
+    const results = [];
 
-  const bonuses = [10, 7, 5];
-  const minBonus = 3;
+    const bonuses = [10, 7, 5];
+    const minBonus = 3;
 
-  // trier les bonnes réponses par temps
-  const correctAnswers = answers
-    .filter((a) => a.correct)
-    .sort((a, b) => a.time - b.time);
+    // trier les bonnes réponses par temps
+    const correctAnswers = answers
+      .filter((a) => a.correct)
+      .sort((a, b) => a.time - b.time);
 
-  correctAnswers.forEach((ans, idx) => {
-    const base = 10;
-    const bonus = idx < bonuses.length ? bonuses[idx] : minBonus;
-    const gained = base + bonus;
+    correctAnswers.forEach((ans, idx) => {
+      const base = 10;
+      const bonus = idx < bonuses.length ? bonuses[idx] : minBonus;
+      const gained = base + bonus;
 
-    const prev = quiz.scores.get(ans.socketId) || 0;
-    const newScore = prev + gained;
-    quiz.scores.set(ans.socketId, newScore);
-  });
-
-  for (const player of room.users.values()) {
-    const ans = answers.find((a) => a.socketId === player.id);
-    results.push({
-      id: player.id,
-      user: player.user,
-      answer: ans ? ans.answer : null,
-      correct: !!(ans && ans.correct),
-      pointsGained: ans && ans.correct
-        ? (correctAnswers.findIndex((a) => a.socketId === player.id) === 0
-            ? 20
-            : 10)
-        : 0,
-      totalScore: quiz.scores.get(player.id) || 0,
+      const prev = quiz.scores.get(ans.socketId) || 0;
+      const newScore = prev + gained;
+      quiz.scores.set(ans.socketId, newScore);
     });
+
+    for (const player of room.users.values()) {
+      const ans = answers.find((a) => a.socketId === player.id);
+      results.push({
+        id: player.id,
+        user: player.user,
+        answer: ans ? ans.answer : null,
+        correct: !!(ans && ans.correct),
+        pointsGained:
+          ans && ans.correct
+            ? correctAnswers.findIndex((a) => a.socketId === player.id) === 0
+              ? 20
+              : 10
+            : 0,
+        totalScore: quiz.scores.get(player.id) || 0,
+      });
+    }
+
+    this.io.to(roomName).emit("question-ended", {
+      questionIndex: quiz.currentIndex,
+      results,
+      scores: this.serializeScores(quiz, room),
+      correctAnswer: quiz.questions[quiz.currentIndex].correctAnswer,
+    });
+
+    quiz.currentIndex += 1;
+    this.sendQuestion(roomName);
   }
-
-  this.io.to(roomName).emit("question-ended", {
-    questionIndex: quiz.currentIndex,
-    results,
-    scores: this.serializeScores(quiz, room),
-    correctAnswer: quiz.questions[quiz.currentIndex].correctAnswer,
-  });
-
-  quiz.currentIndex += 1;
-  this.sendQuestion(roomName);
-}
-
 
   endGame(roomName) {
     const quiz = this.quizzes.get(roomName);

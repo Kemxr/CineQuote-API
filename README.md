@@ -4,8 +4,8 @@
 
 **CineQuote** est une application web permettant aux utilisateurs de découvrir, partager et organiser des citations de films. Le projet suit une architecture client-serveur :
 
-- **Serveur (cette API)** : Gère les données (utilisateurs, films, citations, favoris) et expose une API REST
-- **Client (application web)** : Interface utilisateur communiquant avec le serveur
+- **Serveur** : Gère les données (utilisateurs, films, citations, favoris) et expose une API REST
+- **Client** : Interface utilisateur communiquant avec le serveur
 
 L'API fournit les services nécessaires pour l'authentification, la consultation des films et citations, la gestion des favoris, et les notifications push. **La documentation complète de l'API est disponible via Swagger/OpenAPI** (voir section [Documentation de l'API](#documentation-de-lapi)).
 
@@ -49,7 +49,7 @@ npm --version     # Doit afficher 7.0.0 ou supérieur
 ### 1. Cloner le Projet
 
 ```bash
-git clone <URL_DU_REPOSITORY>
+git clone https://github.com/Kemxr/CineQuote-API.git
 cd CineQuote-API
 ```
 
@@ -58,6 +58,8 @@ Télécharge le code source du projet dans un dossier local.
 ### 2. Installer les Dépendances
 
 ```bash
+npm install
+cd frontend/cine-quote-frontend
 npm install
 ```
 
@@ -105,8 +107,6 @@ VAPID_PRIVATE_KEY=votre_clé_privée_vapid
 | `DATABASE_URL` | URL de connexion MongoDB (local ou MongoDB Atlas) |
 | `JWT_EXPIRES_IN` | Durée de vie des jetons (ex: "7d" = 7 jours) |
 
-**⚠️ Important** : Ne commitez jamais le fichier `.env` (il contient des secrets). Il est déjà dans `.gitignore`.
-
 ### 4. Initialiser la Base de Données (Optionnel)
 
 Pour remplir la base de données avec des données de test :
@@ -123,7 +123,7 @@ npm run clear
 
 ## Lancement du Projet
 
-### Mode Développement (Recommandé)
+### Mode Développement (À la racine du projet)
 
 ```bash
 npm run dev
@@ -133,8 +133,8 @@ Démarre simultanément le serveur backend et le client frontend. Le serveur red
 
 **Accès :**
 - API : `http://localhost:3000/api`
-- Swagger UI : `http://localhost:10000/api-docs`
-- Frontend : `http://localhost:5173` (ou port configuré)
+- Swagger UI : `http://localhost:8899/api-docs`
+- Frontend : `http://localhost:5173`
 
 ### Mode Production
 
@@ -160,14 +160,14 @@ npm run test:coverage # Génère un rapport de couverture
 
 ## Documentation de l'API
 
-La documentation complète de l'API est disponible via **Swagger UI**, une interface interactive. Le fichier source est `openapi.yaml` (spécification OpenAPI 3.0).
+La documentation complète de l'API est disponible via **Swagger UI**, une interface interactive. Le fichier source est `openapi.yml` (spécification OpenAPI 3.0).
 
 ### Accès à Swagger UI
 
 Une fois le serveur lancé (`npm run dev`), ouvrez :
 
 ```
-http://localhost:10000/api-docs
+http://localhost:8899/api-docs
 ```
 
 Swagger UI affiche :
@@ -182,7 +182,7 @@ Swagger UI affiche :
 Le fichier de spécification brut est accessible à :
 
 ```
-http://localhost:10000/api-docs/openapi.yaml
+http://localhost:8899/api-docs/openapi.yaml
 ```
 
 Peut être utilisé avec d'autres outils OpenAPI/Swagger.
@@ -222,11 +222,6 @@ L'API utilise **JWT (JSON Web Token)** :
 | **Authentifié** | JWT valide | Gérer favoris, consulter profil personnel |
 | **Admin** | JWT + rôle admin | Créer/modifier/supprimer films et citations |
 
-### Documentation Complète
-
-Pour tous les détails techniques, consultez **Swagger UI** :
-- URL : `http://localhost:10000/api-docs`
-- Contient tous les endpoints, paramètres, schémas et exemples
 
 ## Notes pour l'Évaluation
 
@@ -234,8 +229,8 @@ Pour tous les détails techniques, consultez **Swagger UI** :
 
 **Swagger/OpenAPI 3.0 est la source unique et officielle de documentation de l'API.**
 
-- **Fichier source** : `openapi.yaml` (spécification OpenAPI 3.0 complète)
-- **Interface interactive** : Swagger UI à `http://localhost:10000/api-docs`
+- **Fichier source** : `openapi.yml` (spécification OpenAPI 3.0 complète)
+- **Interface interactive** : Swagger UI à `http://localhost:8899/api-docs`
 - **Aucune autre documentation API en Markdown** n'est nécessaire
 
 ### Choix de Documentation
@@ -290,6 +285,8 @@ CineQuote-API/
 │   └── userMiddleware.js
 ├── frontend/               # Application web client (React/Vue)
 ├── app.js                  # Configuration Express principale
+├── store                   # Gestionnaire WebSocket et données du quiz
+├── spec                    # Différents test
 ├── config.js               # Configuration (variables d'environnement)
 ├── openapi.yaml            # Spécification OpenAPI 3.0 (documentation API)
 ├── package.json            # Dépendances et scripts npm
@@ -323,8 +320,9 @@ CineQuote-API/
 
 **Vérifications :**
 - Le serveur est-il lancé ? (`npm run dev`)
-- L'URL est-elle correcte ? (`http://localhost:10000/api-docs`)
-- Le port 10000 correspond-il à votre configuration ?
+- L'URL est-elle correcte ? (`http://localhost:8899/api-docs`)
+- Le port 8899 correspond-il à votre configuration ?
+- Le cache est-il vide ?
 
 ## Ressources Utiles
 
@@ -338,7 +336,7 @@ CineQuote-API/
 
 ## Licence
 
-Ce projet est fourni à titre académique.
+MIT
 
 ---
 

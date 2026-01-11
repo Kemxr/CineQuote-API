@@ -96,9 +96,7 @@ const handleLogin = async () => {
   width: 100vw;
   height: 100vh;
   padding: 24px;
-  background: radial-gradient(circle at 0% 0%, #3a5bff 0, transparent 45%),
-              radial-gradient(circle at 100% 100%, #a855ff 0, transparent 45%),
-              #050816;
+  background: #050b1a;
   color: #f9fafb;
 }
 

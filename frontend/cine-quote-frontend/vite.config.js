@@ -13,7 +13,7 @@ export default defineConfig(({ mode }) => {
       vue(),
       VitePWA({
         registerType: 'autoUpdate',
-        includeAssets: ['DVD-192.jpg', 'DVD-512.jpg'],
+        includeAssets: ['Logo-192.png', 'Logo-512.png'],
         workbox: {
           globPatterns: ['**/*.{js,css,html,ico,png,jpg,svg,woff2}'],
           // En mode dev, on ignore les warnings sur les fichiers manquants
@@ -73,15 +73,15 @@ export default defineConfig(({ mode }) => {
           start_url: '/',
           icons: [
             {
-              src: '/DVD-192.jpg',
+              src: '/Logo-192.png',
               sizes: '192x192',
-              type: 'image/jpeg',
+              type: 'image/png',
               purpose: 'any maskable'
             },
             {
-              src: '/DVD-512.jpg',
+              src: '/Logo-512.png',
               sizes: '512x512',
-              type: 'image/jpeg',
+              type: 'image/png',
               purpose: 'any maskable'
             }
           ]
