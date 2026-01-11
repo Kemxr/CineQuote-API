@@ -77,7 +77,7 @@ cp .env.example .env  # Si un fichier .env.example existe
 # Sinon, créez manuellement un fichier .env
 ```
 
-Remplissez le fichier `.env` avec les valeurs suivantes :
+Remplissez le fichier `.env`du backend avec les valeurs suivantes :
 
 ```env
 # Serveur
@@ -99,6 +99,14 @@ VITE_WS_PORT=8899
 # Notifications push (optionnel)
 VAPID_PUBLIC_KEY=votre_clé_publique_vapid
 VAPID_PRIVATE_KEY=votre_clé_privée_vapid
+```
+
+Allez ensuite dans le frontend et rajouter un `.env` avec cela dedans :
+
+```
+VITE_WS_HOST="localhost"
+VITE_WS_PORT="8899"
+VITE_API_URL="http://localhost:3000/api"
 ```
 
 **Explication des variables principales :**
